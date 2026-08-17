@@ -1,0 +1,85 @@
+@model dynamic
+@{
+    var article = Model.Article as ass01_FE.Presentation.Models.News.NewsArticleDto;
+    var related = Model.Related as List<ass01_FE.Presentation.Models.News.NewsArticleDto>;
+    ViewData["Title"] = article?.NewsTitle;
+}
+
+@if (article == null)
+{
+    <div class="alert alert-danger">Article not found.</div>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-8">
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@article.CategoryName</li>
+              </ol>
+            </nav>
+            
+            <h1 class="mb-3">@article.NewsTitle</h1>
+            <h5 class="text-muted mb-4">@article.Headline</h5>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                <div>
+                    <strong>By @article.CreatedByName</strong>
+                    <span class="text-muted mx-2">|</span>
+                    <span class="text-muted">@article.CreatedDate?.ToString("f")</span>
+                </div>
+                <div>
+                    @if (article.Tags != null)
+                    {
+                        foreach (var tag in article.Tags)
+                        {
+                            <span class="badge bg-light text-dark border">#@tag.TagName</span>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="fs-5 lh-lg mb-5">
+                @* In a real app we'd use Html.Raw if content is HTML, but here we output directly for safety *@
+                @article.NewsContent
+            </div>
+            
+            @if (!string.IsNullOrEmpty(article.NewsSource))
+            {
+                <div class="alert alert-light border">
+                    <strong>Source:</strong> @article.NewsSource
+                </div>
+            }
+        </div>
+
+        <div class="col-md-4">
+            <h4 class="mb-4">Related News</h4>
+            @if (related != null && related.Any())
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var item in related)
+                    {
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <a asp-action="Detail" asp-route-id="@item.NewsArticleId" class="text-decoration-none">
+                                        @item.NewsTitle
+                                    </a>
+                                </h6>
+                                <p class="card-text text-muted small">@item.Headline</p>
+                            </div>
+                            <div class="card-footer bg-white border-top-0 pt-0">
+                                <small class="text-muted">@item.CreatedDate?.ToString("MMM dd, yyyy")</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">No related news available.</p>
+            }
+        </div>
+    </div>
+}

@@ -1,0 +1,340 @@
+@model IEnumerable<ass01_FE.Presentation.Models.News.TagDto>
+@{
+    ViewData["Title"] = "Tag Management";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Tag Management</h2>
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createModal">
+        + Create Tag
+    </button>
+</div>
+
+<div id="alertContainer"></div>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Note</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var tag in Model)
+                {
+                    <tr>
+                        <td>@tag.TagId</td>
+                        <td>@tag.TagName</td>
+                        <td>@tag.Note</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info" onclick="viewArticles(@tag.TagId, '@tag.TagName?.Replace("'", "\\'")')">Articles</button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="openEditModal(@tag.TagId, '@tag.TagName?.Replace("'", "\\'")', '@tag.Note?.Replace("'", "\\'")')">Edit</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTag(@tag.TagId)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="4" class="text-center text-muted">No tags found.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Tag</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createForm" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label class="form-label">Tag Name</label>
+                        <input type="text" class="form-control" id="c_name" required maxlength="50" />
+                        <div class="invalid-feedback">Name is required (max 50 chars).</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Note</label>
+                        <textarea class="form-control" id="c_note" maxlength="250"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="btnCreate" onclick="createTag()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Tag</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" class="needs-validation" novalidate>
+                    <input type="hidden" id="e_id" />
+                    <div class="mb-3">
+                        <label class="form-label">Tag Name</label>
+                        <input type="text" class="form-control" id="e_name" required maxlength="50" />
+                        <div class="invalid-feedback">Name is required (max 50 chars).</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Note</label>
+                        <textarea class="form-control" id="e_note" maxlength="250"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="btnEdit" onclick="updateTag()">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Articles Modal -->
+<div class="modal fade" id="articlesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="articlesModalTitle">Articles for Tag</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="articlesLoading" class="text-center d-none">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm d-none" id="articlesTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Created By</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div id="articlesEmpty" class="text-center text-muted d-none">
+                    No active articles use this tag.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showAlert(msg, type = 'success') {
+            const box = document.getElementById('alertContainer');
+            box.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show">
+                ${msg}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`;
+        }
+
+        async function loadTable() {
+            try {
+                const res = await fetch(`/Tag/GetList`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const tbody = document.querySelector('table tbody');
+                    tbody.innerHTML = '';
+                    
+                    if (!data || data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No tags found.</td></tr>';
+                        return;
+                    }
+                    
+                    data.forEach(tag => {
+                        const escName = tag.tagName ? tag.tagName.replace(/'/g, "\\'") : '';
+                        const escNote = tag.note ? tag.note.replace(/'/g, "\\'") : '';
+                        
+                        tbody.innerHTML += `<tr>
+                            <td>${tag.tagId}</td>
+                            <td>${tag.tagName}</td>
+                            <td>${tag.note || ''}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-info" onclick="viewArticles(${tag.tagId}, '${escName}')">Articles</button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="openEditModal(${tag.tagId}, '${escName}', '${escNote}')">Edit</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteTag(${tag.tagId})">Delete</button>
+                            </td>
+                        </tr>`;
+                    });
+                }
+            } catch(e) {
+                console.error("Failed to reload table", e);
+            }
+        }
+
+        async function createTag() {
+            const form = document.getElementById('createForm');
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+
+            const btn = document.getElementById('btnCreate');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Saving...';
+            btn.disabled = true;
+
+            const data = {
+                tagName: document.getElementById('c_name').value,
+                note: document.getElementById('c_note').value
+            };
+
+            try {
+                const response = await fetch('/Tag/Create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const res = await response.json();
+                if (response.ok) {
+                    showAlert(res.message, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                    form.reset();
+                    form.classList.remove('was-validated');
+                    await loadTable();
+                } else {
+                    showAlert(res.message || 'Failed to create', 'danger');
+                    bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                }
+            } catch (err) {
+                showAlert('Network error', 'danger');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function openEditModal(id, name, note) {
+            document.getElementById('e_id').value = id;
+            document.getElementById('e_name').value = name;
+            document.getElementById('e_note').value = note;
+            
+            document.getElementById('editForm').classList.remove('was-validated');
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        }
+
+        async function updateTag() {
+            const form = document.getElementById('editForm');
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+
+            const btn = document.getElementById('btnEdit');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Updating...';
+            btn.disabled = true;
+
+            const id = document.getElementById('e_id').value;
+            const data = {
+                tagName: document.getElementById('e_name').value,
+                note: document.getElementById('e_note').value
+            };
+
+            try {
+                const response = await fetch(`/Tag/Update/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const res = await response.json();
+                if (response.ok) {
+                    showAlert(res.message, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                    await loadTable();
+                } else {
+                    showAlert(res.message || 'Failed to update', 'danger');
+                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                }
+            } catch (err) {
+                showAlert('Network error', 'danger');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteTag(id) {
+            if (!confirm('Are you sure you want to delete this tag?')) return;
+
+            try {
+                const response = await fetch(`/Tag/Delete/${id}`, { method: 'DELETE' });
+                const res = await response.json();
+                if (response.ok) {
+                    showAlert(res.message, 'success');
+                    await loadTable();
+                } else {
+                    showAlert(res.message || 'Failed to delete', 'danger');
+                }
+            } catch (err) {
+                showAlert('Network error', 'danger');
+            }
+        }
+
+        async function viewArticles(id, name) {
+            document.getElementById('articlesModalTitle').innerText = 'Articles for Tag: ' + name;
+            
+            const loading = document.getElementById('articlesLoading');
+            const table = document.getElementById('articlesTable');
+            const tbody = table.querySelector('tbody');
+            const empty = document.getElementById('articlesEmpty');
+            
+            loading.classList.remove('d-none');
+            table.classList.add('d-none');
+            empty.classList.add('d-none');
+            tbody.innerHTML = '';
+            
+            new bootstrap.Modal(document.getElementById('articlesModal')).show();
+            
+            try {
+                const res = await fetch(`/Tag/GetNewsForTag/${id}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.length > 0) {
+                        data.forEach(n => {
+                            let statusBadge = n.newsStatus ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>';
+                            tbody.innerHTML += `<tr>
+                                <td>${n.newsArticleId}</td>
+                                <td>${n.newsTitle}</td>
+                                <td>${n.createdByName || ''}</td>
+                                <td>${statusBadge}</td>
+                            </tr>`;
+                        });
+                        table.classList.remove('d-none');
+                    } else {
+                        empty.classList.remove('d-none');
+                    }
+                } else {
+                    empty.innerText = "Error loading articles.";
+                    empty.classList.remove('d-none');
+                }
+            } catch (e) {
+                empty.innerText = "Network error loading articles.";
+                empty.classList.remove('d-none');
+            } finally {
+                loading.classList.add('d-none');
+            }
+        }
+    </script>
+}

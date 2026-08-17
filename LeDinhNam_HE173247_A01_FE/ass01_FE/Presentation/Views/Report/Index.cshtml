@@ -1,0 +1,166 @@
+@model ass01_FE.Presentation.Models.Report.ReportViewModel
+@{
+    ViewData["Title"] = "Report Management";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Report Management</h2>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Start Date</label>
+                <input type="date" name="startDate" class="form-control" value="@Model.Request.StartDate?.ToString("yyyy-MM-dd")" required />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">End Date</label>
+                <input type="date" name="endDate" class="form-control" value="@Model.Request.EndDate?.ToString("yyyy-MM-dd")" required />
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">Generate Report</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+@if (Model.Statistics != null)
+{
+    <div class="row text-center mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white shadow-sm h-100">
+                <div class="card-body py-4">
+                    <h5 class="card-title">Total Articles</h5>
+                    <h2 class="display-5 fw-bold mb-0">@Model.Statistics.TotalArticles</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white shadow-sm h-100">
+                <div class="card-body py-4">
+                    <h5 class="card-title">Active Articles</h5>
+                    <h2 class="display-5 fw-bold mb-0">@Model.Statistics.ActiveArticles</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-secondary text-white shadow-sm h-100">
+                <div class="card-body py-4">
+                    <h5 class="card-title">Inactive Articles</h5>
+                    <h2 class="display-5 fw-bold mb-0">@Model.Statistics.InactiveArticles</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light"><h5 class="mb-0">By Status</h5></div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var stat in Model.Statistics.StatusStatistics)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            @(stat.Status == true ? "Active" : stat.Status == false ? "Inactive" : "Unknown")
+                            <span class="badge bg-primary rounded-pill">@stat.Count</span>
+                        </li>
+                    }
+                    @if (!Model.Statistics.StatusStatistics.Any())
+                    {
+                        <li class="list-group-item text-muted">No data</li>
+                    }
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light"><h5 class="mb-0">By Category</h5></div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var stat in Model.Statistics.CategoryStatistics)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            @(stat.CategoryName ?? "No Category")
+                            <span class="badge bg-primary rounded-pill">@stat.Count</span>
+                        </li>
+                    }
+                    @if (!Model.Statistics.CategoryStatistics.Any())
+                    {
+                        <li class="list-group-item text-muted">No data</li>
+                    }
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light"><h5 class="mb-0">By Author</h5></div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var stat in Model.Statistics.AuthorStatistics)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            @(stat.AuthorName ?? "Unknown")
+                            <span class="badge bg-primary rounded-pill">@stat.Count</span>
+                        </li>
+                    }
+                    @if (!Model.Statistics.AuthorStatistics.Any())
+                    {
+                        <li class="list-group-item text-muted">No data</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light"><h5 class="mb-0">Report Articles (Latest First)</h5></div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Author</th>
+                            <th>Updated By</th>
+                            <th>Status</th>
+                            <th>Created Date</th>
+                            <th>Modified Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var article in Model.Statistics.Articles)
+                        {
+                            <tr>
+                                <td>@article.NewsTitle</td>
+                                <td>@article.CategoryName</td>
+                                <td>@article.CreatedByName</td>
+                                <td>@article.UpdatedByName</td>
+                                <td>
+                                    @if (article.NewsStatus == true)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                                <td>@article.CreatedDate?.ToString("MMM dd, yyyy")</td>
+                                <td>@article.ModifiedDate?.ToString("MMM dd, yyyy")</td>
+                            </tr>
+                        }
+                        @if (!Model.Statistics.Articles.Any())
+                        {
+                            <tr><td colspan="7" class="text-center text-muted">No articles found in this period.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}

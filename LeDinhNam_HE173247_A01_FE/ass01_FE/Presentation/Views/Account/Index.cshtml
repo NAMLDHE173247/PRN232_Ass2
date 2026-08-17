@@ -1,0 +1,324 @@
+@model List<ass01_FE.Presentation.Models.Account.AccountDto>
+@{
+    ViewData["Title"] = "Account Management";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Account Management</h2>
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createModal">
+        + Create Account
+    </button>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-3 align-items-center">
+            <div class="col-auto">
+                <input type="text" name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Search by name or email..." />
+            </div>
+            <div class="col-auto">
+                <select name="role" class="form-select">
+                    <option value="">All Roles</option>
+                    @if (ViewBag.Role == 1) { <option value="1" selected>Staff</option> } else { <option value="1">Staff</option> }
+                    @if (ViewBag.Role == 2) { <option value="2" selected>Lecturer</option> } else { <option value="2">Lecturer</option> }
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Search</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="alertContainer"></div>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var acc in Model)
+            {
+                <tr>
+                    <td>@acc.AccountId</td>
+                    <td>@acc.AccountName</td>
+                    <td>@acc.AccountEmail</td>
+                    <td>
+                        @if (acc.AccountRole == 1) { <span class="badge bg-primary">Staff</span> }
+                        else if (acc.AccountRole == 2) { <span class="badge bg-info">Lecturer</span> }
+                        else if (acc.AccountRole == 3) { <span class="badge bg-danger">Admin</span> }
+                        else { <span class="badge bg-secondary">Unknown</span> }
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="openEditModal(@acc.AccountId, '@acc.AccountName', '@acc.AccountEmail', @acc.AccountRole)">Edit</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteAccount(@acc.AccountId)">Delete</button>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="5" class="text-center text-muted">No accounts found.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createForm" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" id="c_name" required minlength="3" maxlength="100" />
+                        <div class="invalid-feedback">Name is required (3-100 characters).</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="c_email" required />
+                        <div class="invalid-feedback">Valid email is required.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="c_pass" required minlength="6" />
+                        <div class="invalid-feedback">Password is required (min 6 characters).</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Role</label>
+                        <select class="form-select" id="c_role" required>
+                            <option value="">Choose...</option>
+                            <option value="1">Staff</option>
+                            <option value="2">Lecturer</option>
+                        </select>
+                        <div class="invalid-feedback">Role is required.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="btnCreate" onclick="createAccount()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" class="needs-validation" novalidate>
+                    <input type="hidden" id="e_id" />
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" id="e_name" required minlength="3" maxlength="100" />
+                        <div class="invalid-feedback">Name is required (3-100 characters).</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="e_email" required />
+                        <div class="invalid-feedback">Valid email is required.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Role</label>
+                        <select class="form-select" id="e_role" required>
+                            <option value="">Choose...</option>
+                            <option value="1">Staff</option>
+                            <option value="2">Lecturer</option>
+                            <option value="3">Admin</option>
+                        </select>
+                        <div class="invalid-feedback">Role is required.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="btnEdit" onclick="updateAccount()">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showAlert(msg, type = 'success') {
+            const box = document.getElementById('alertContainer');
+            box.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show">
+                ${msg}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`;
+        }
+
+        async function loadTable() {
+            const keyword = document.querySelector('input[name="keyword"]').value || '';
+            const role = document.querySelector('select[name="role"]').value || '';
+            
+            try {
+                const res = await fetch(`/Account/GetList?keyword=${encodeURIComponent(keyword)}&role=${role}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const tbody = document.querySelector('table tbody');
+                    tbody.innerHTML = '';
+                    
+                    if (data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No accounts found.</td></tr>';
+                        return;
+                    }
+                    
+                    data.forEach(acc => {
+                        let roleBadge = '<span class="badge bg-secondary">Unknown</span>';
+                        if(acc.accountRole === 1) roleBadge = '<span class="badge bg-primary">Staff</span>';
+                        else if(acc.accountRole === 2) roleBadge = '<span class="badge bg-info">Lecturer</span>';
+                        else if(acc.accountRole === 3) roleBadge = '<span class="badge bg-danger">Admin</span>';
+                        
+                        // Sanitize to prevent XSS in rendering
+                        const escName = acc.accountName ? acc.accountName.replace(/'/g, "\\'") : '';
+                        
+                        tbody.innerHTML += `<tr>
+                            <td>${acc.accountId}</td>
+                            <td>${acc.accountName}</td>
+                            <td>${acc.accountEmail}</td>
+                            <td>${roleBadge}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="openEditModal(${acc.accountId}, '${escName}', '${acc.accountEmail}', ${acc.accountRole})">Edit</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteAccount(${acc.accountId})">Delete</button>
+                            </td>
+                        </tr>`;
+                    });
+                }
+            } catch(e) {
+                console.error("Failed to reload table", e);
+            }
+        }
+
+        async function createAccount() {
+            const form = document.getElementById('createForm');
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+
+            const btn = document.getElementById('btnCreate');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Saving...';
+            btn.disabled = true;
+
+            const data = {
+                accountName: document.getElementById('c_name').value,
+                accountEmail: document.getElementById('c_email').value,
+                accountPassword: document.getElementById('c_pass').value,
+                accountRole: parseInt(document.getElementById('c_role').value)
+            };
+
+            try {
+                const response = await fetch('/Account/Create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const res = await response.json();
+                if (response.ok) {
+                    showAlert(res.message, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                    form.reset();
+                    form.classList.remove('was-validated');
+                    await loadTable();
+                } else {
+                    showAlert(res.message || 'Failed to create', 'danger');
+                    bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                }
+            } catch (err) {
+                showAlert('Network error', 'danger');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function openEditModal(id, name, email, role) {
+            document.getElementById('e_id').value = id;
+            document.getElementById('e_name').value = name;
+            document.getElementById('e_email').value = email;
+            document.getElementById('e_role').value = role;
+            
+            document.getElementById('editForm').classList.remove('was-validated');
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        }
+
+        async function updateAccount() {
+            const form = document.getElementById('editForm');
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+
+            const btn = document.getElementById('btnEdit');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Updating...';
+            btn.disabled = true;
+
+            const data = {
+                accountId: parseInt(document.getElementById('e_id').value),
+                accountName: document.getElementById('e_name').value,
+                accountEmail: document.getElementById('e_email').value,
+                accountRole: parseInt(document.getElementById('e_role').value)
+            };
+
+            try {
+                const response = await fetch('/Account/Update', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const res = await response.json();
+                if (response.ok) {
+                    showAlert(res.message, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                    await loadTable();
+                } else {
+                    showAlert(res.message || 'Failed to update', 'danger');
+                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                }
+            } catch (err) {
+                showAlert('Network error', 'danger');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteAccount(id) {
+            if (!confirm('Are you sure you want to delete this account?')) return;
+
+            try {
+                const response = await fetch(`/Account/Delete/${id}`, { method: 'DELETE' });
+                const res = await response.json();
+                if (response.ok) {
+                    showAlert(res.message, 'success');
+                    await loadTable();
+                } else {
+                    showAlert(res.message || 'Failed to delete account', 'danger');
+                }
+            } catch (err) {
+                showAlert('Network error', 'danger');
+            }
+        }
+    </script>
+}
