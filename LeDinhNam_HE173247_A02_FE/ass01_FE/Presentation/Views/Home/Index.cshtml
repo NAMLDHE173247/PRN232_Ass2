@@ -27,6 +27,10 @@ else
         {
             <div class="col">
                 <div class="card h-100 shadow-sm">
+                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                    {
+                        <img src="@item.ImageUrl" class="card-img-top" alt="@item.NewsTitle" style="height: 200px; object-fit: cover;">
+                    }
                     <div class="card-body">
                         <h5 class="card-title">
                             <a asp-action="Detail" asp-route-id="@item.NewsArticleId" class="text-decoration-none">
@@ -46,9 +50,12 @@ else
                             }
                         </div>
                     </div>
-                    <div class="card-footer text-muted bg-white d-flex justify-content-between">
-                        <small>By @item.CreatedByName</small>
-                        <small>@item.CreatedDate?.ToString("MMM dd, yyyy")</small>
+                    <div class="card-footer text-muted bg-white d-flex justify-content-between align-items-center">
+                        <div>
+                            <small>By @item.CreatedByName</small><br>
+                            <small>@item.CreatedDate?.ToString("MMM dd, yyyy")</small>
+                        </div>
+                        <small><i class="bi bi-eye"></i> @item.ViewCount</small>
                     </div>
                 </div>
             </div>

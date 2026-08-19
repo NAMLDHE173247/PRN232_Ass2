@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using ass01_FE.DataAccess.Services;
 using ass01_FE.Presentation.Models.Account;
+using ass01_FE.Infrastructure.Filters;
 
 namespace ass01_FE.Presentation.Controllers;
 
+[RoleAuthorize("Admin")]
 public class AccountController : Controller
 {
     private readonly AccountApiService _accountApiService;

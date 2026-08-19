@@ -1,0 +1,163 @@
+@model ass01_FE.DataAccess.Services.AuditLogListResult
+@{
+    ViewData["Title"] = "Audit Logs";
+    
+    var items = Model?.Value;
+    int totalCount = Model?.Count ?? 0;
+    
+    int skip = ViewBag.Skip ?? 0;
+    int top = ViewBag.Top ?? 50;
+    
+    int currentPage = (skip / top) + 1;
+    int totalPages = (int)Math.Ceiling((double)totalCount / top);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>System Audit Logs</h2>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-3 align-items-center">
+            <div class="col-auto">
+                <input type="number" name="userId" value="@ViewBag.UserId" class="form-control" placeholder="User ID..." />
+            </div>
+            <div class="col-auto">
+                <input type="text" name="entity" value="@ViewBag.Entity" class="form-control" placeholder="Entity (e.g. NewsArticle)" />
+            </div>
+            <div class="col-auto">
+                <input type="text" name="actionType" value="@ViewBag.ActionType" class="form-control" placeholder="Action (e.g. Create, Update)" />
+            </div>
+            <div class="col-auto">
+                <select name="top" class="form-select">
+                    <option value="50" selected="@(top == 50)">50 per page</option>
+                    <option value="100" selected="@(top == 100)">100 per page</option>
+                    <option value="500" selected="@(top == 500)">500 per page</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Search</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle table-sm">
+        <thead class="table-light">
+            <tr>
+                <th>ID</th>
+                <th>Timestamp</th>
+                <th>User</th>
+                <th>Action</th>
+                <th>Entity</th>
+                <th>Entity ID</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (items != null && items.Any())
+            {
+                foreach (var log in items)
+                {
+                    <tr>
+                        <td>@log.Id</td>
+                        <td>@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td>
+                            @if(log.UserId.HasValue)
+                            {
+                                <span>@log.UserId - @log.UserEmail</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">System</span>
+                            }
+                        </td>
+                        <td>
+                            @if(log.Action == "Create") { <span class="badge bg-success">@log.Action</span> }
+                            else if(log.Action == "Update") { <span class="badge bg-primary">@log.Action</span> }
+                            else if(log.Action == "Delete") { <span class="badge bg-danger">@log.Action</span> }
+                            else { <span class="badge bg-secondary">@log.Action</span> }
+                        </td>
+                        <td>@log.Entity</td>
+                        <td>@log.EntityId</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info" 
+                                    onclick="showDetails(this)" 
+                                    data-before="@Uri.EscapeDataString(log.BeforeJson ?? "")" 
+                                    data-after="@Uri.EscapeDataString(log.AfterJson ?? "")">
+                                View JSON
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="7" class="text-center text-muted">No audit logs found.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (totalPages > 1)
+{
+    <nav>
+        <ul class="pagination justify-content-center">
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                int pSkip = (i - 1) * top;
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <a class="page-link" href="?userId=@ViewBag.UserId&entity=@ViewBag.Entity&actionType=@ViewBag.ActionType&skip=@pSkip&top=@top">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}
+
+<!-- JSON Details Modal -->
+<div class="modal fade" id="jsonModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Audit Log Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Before</h6>
+                        <pre id="beforeJson" class="bg-light p-2 rounded" style="max-height: 400px; overflow-y: auto; font-size: 0.85rem;"></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>After</h6>
+                        <pre id="afterJson" class="bg-light p-2 rounded" style="max-height: 400px; overflow-y: auto; font-size: 0.85rem;"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showDetails(btn) {
+            try {
+                const beforeRaw = decodeURIComponent(btn.getAttribute('data-before'));
+                const afterRaw = decodeURIComponent(btn.getAttribute('data-after'));
+                
+                const beforeJson = beforeRaw ? JSON.stringify(JSON.parse(beforeRaw), null, 2) : "N/A";
+                const afterJson = afterRaw ? JSON.stringify(JSON.parse(afterRaw), null, 2) : "N/A";
+                
+                document.getElementById('beforeJson').textContent = beforeJson;
+                document.getElementById('afterJson').textContent = afterJson;
+                
+                new bootstrap.Modal(document.getElementById('jsonModal')).show();
+            } catch (e) {
+                console.error("Error parsing JSON", e);
+                alert("Error parsing JSON data");
+            }
+        }
+    </script>
+}

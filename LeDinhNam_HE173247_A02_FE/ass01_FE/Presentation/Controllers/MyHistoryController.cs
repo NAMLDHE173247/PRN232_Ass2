@@ -3,8 +3,11 @@ using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using ass01_FE.DataAccess.Services;
 
+using ass01_FE.Infrastructure.Filters;
+
 namespace ass01_FE.Presentation.Controllers;
 
+[RoleAuthorize("Staff")]
 public class MyHistoryController : Controller
 {
     private readonly NewsApiService _newsApiService;

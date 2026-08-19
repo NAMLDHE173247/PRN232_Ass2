@@ -28,6 +28,8 @@ else
                     <strong>By @article.CreatedByName</strong>
                     <span class="text-muted mx-2">|</span>
                     <span class="text-muted">@article.CreatedDate?.ToString("f")</span>
+                    <span class="text-muted mx-2">|</span>
+                    <span class="text-muted"><i class="bi bi-eye"></i> @article.ViewCount Views</span>
                 </div>
                 <div>
                     @if (article.Tags != null)
@@ -39,6 +41,13 @@ else
                     }
                 </div>
             </div>
+
+            @if (!string.IsNullOrEmpty(article.ImageUrl))
+            {
+                <div class="mb-4 text-center">
+                    <img src="@article.ImageUrl" class="img-fluid rounded shadow-sm" alt="@article.NewsTitle" style="max-height: 400px; object-fit: cover; width: 100%;">
+                </div>
+            }
 
             <div class="fs-5 lh-lg mb-5">
                 @* In a real app we'd use Html.Raw if content is HTML, but here we output directly for safety *@

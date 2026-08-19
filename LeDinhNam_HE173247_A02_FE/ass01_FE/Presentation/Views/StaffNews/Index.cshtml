@@ -20,7 +20,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>News Management</h2>
-    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createModal">
+    <button class="btn btn-success" onclick="openCreateNewsModal()" @(ViewBag.IsOffline == true ? "disabled title=\"Create is disabled in offline mode\"" : "")>
         + Create News
     </button>
 </div>
@@ -128,9 +128,9 @@
                             @{
                                 var tagsJson = System.Text.Json.JsonSerializer.Serialize(news.Tags.Select(t => t.TagId));
                             }
-                            <button class="btn btn-sm btn-outline-primary" onclick="openEditModal('@news.NewsArticleId', '@escapeJs(news.NewsTitle)', '@escapeJs(news.Headline)', '@escapeJs(news.NewsContent)', '@escapeJs(news.NewsSource)', @(news.CategoryId?.ToString() ?? "null"), @(news.NewsStatus == true ? "true" : "false"), @tagsJson)">Edit</button>
-                            <button class="btn btn-sm btn-outline-info" onclick="duplicateNews('@news.NewsArticleId')">Duplicate</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteNews('@news.NewsArticleId')">Delete</button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="openEditNewsModal('@news.NewsArticleId', '@escapeJs(news.NewsTitle)', '@escapeJs(news.Headline)', '@escapeJs(news.NewsContent)', '@escapeJs(news.NewsSource)', @(news.CategoryId?.ToString() ?? "null"), @(news.NewsStatus == true ? "true" : "false"), @tagsJson, '@escapeJs(news.ImageUrl)')" @(ViewBag.IsOffline == true ? "disabled" : "")>Edit</button>
+                            <button class="btn btn-sm btn-outline-info" onclick="duplicateNews('@news.NewsArticleId')" @(ViewBag.IsOffline == true ? "disabled" : "")>Duplicate</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteNews('@news.NewsArticleId')" @(ViewBag.IsOffline == true ? "disabled" : "")>Delete</button>
                         </td>
                     </tr>
                 }
@@ -181,6 +181,13 @@
                         <div class="col-md-12 mb-3">
                             <label class="form-label">Content</label>
                             <textarea class="form-control" id="c_content" rows="4" required></textarea>
+                            <button type="button" class="btn btn-sm btn-outline-info mt-2" id="c_suggest_btn" onclick="requestSuggestedTags('c_content', 'c_suggested_tags')">Suggest Tags</button>
+                            <div id="c_suggested_tags" class="mt-2"></div>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Image</label>
+                            <input type="file" class="form-control" id="c_imageFile" accept="image/*" />
+                            <input type="hidden" id="c_imageUrl" />
                         </div>
                         <div class="col-md-12 mb-3">
                             <label class="form-label">Source</label>
@@ -220,7 +227,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="btnCreate" onclick="createNews()">Save</button>
+                <button type="button" class="btn btn-primary" id="btnCreate" onclick="submitCreateNewsArticle()">Save</button>
             </div>
         </div>
     </div>
@@ -249,6 +256,13 @@
                         <div class="col-md-12 mb-3">
                             <label class="form-label">Content</label>
                             <textarea class="form-control" id="e_content" rows="4" required></textarea>
+                            <button type="button" class="btn btn-sm btn-outline-info mt-2" id="e_suggest_btn" onclick="requestSuggestedTags('e_content', 'e_suggested_tags')">Suggest Tags</button>
+                            <div id="e_suggested_tags" class="mt-2"></div>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Image</label>
+                            <input type="file" class="form-control" id="e_imageFile" accept="image/*" />
+                            <input type="hidden" id="e_imageUrl" />
                         </div>
                         <div class="col-md-12 mb-3">
                             <label class="form-label">Source</label>
@@ -288,7 +302,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="btnEdit" onclick="updateNews()">Update</button>
+                <button type="button" class="btn btn-primary" id="btnEdit" onclick="submitUpdateNewsArticle()">Update</button>
             </div>
         </div>
     </div>
@@ -297,11 +311,7 @@
 @section Scripts {
     <script>
         function showAlert(msg, type = 'success') {
-            const box = document.getElementById('alertContainer');
-            box.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show">
-                ${msg}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>`;
+            showAppToast("Notification", msg, type);
         }
 
         async function loadTable() {
@@ -356,7 +366,7 @@
                             <td>${news.updatedByName || ''}</td>
                             <td>${modifiedDate}</td>
                             <td>
-                                <button class="btn btn-sm btn-outline-primary" onclick="openEditModal('${news.newsArticleId}', '${escTitle}', '${escHeadline}', '${escContent}', '${escSource}', ${news.categoryId !== null ? news.categoryId : 'null'}, ${news.newsStatus}, ${tagsJson.replace(/"/g, "&quot;")})">Edit</button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="openEditNewsModal('${news.newsArticleId}', '${escTitle}', '${escHeadline}', '${escContent}', '${escSource}', ${news.categoryId !== null ? news.categoryId : 'null'}, ${news.newsStatus}, ${tagsJson.replace(/\"/g, '&quot;')}, '${news.imageUrl || ''}')">Edit</button>
                                 <button class="btn btn-sm btn-outline-info" onclick="duplicateNews('${news.newsArticleId}')">Duplicate</button>
                                 <button class="btn btn-sm btn-outline-danger" onclick="deleteNews('${news.newsArticleId}')">Delete</button>
                             </td>
@@ -368,58 +378,18 @@
             }
         }
 
-        async function createNews() {
-            const form = document.getElementById('createForm');
-            if (!form.checkValidity()) {
-                form.classList.add('was-validated');
-                return;
-            }
+        let selectedAiTags = new Set();
 
-            const btn = document.getElementById('btnCreate');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Saving...';
-            btn.disabled = true;
-
-            const categoryVal = document.getElementById('c_category').value;
-            const tagSelect = document.getElementById('c_tags');
-            const selectedTags = Array.from(tagSelect.selectedOptions).map(opt => parseInt(opt.value));
-
-            const data = {
-                newsTitle: document.getElementById('c_title').value,
-                headline: document.getElementById('c_headline').value,
-                newsContent: document.getElementById('c_content').value,
-                newsSource: document.getElementById('c_source').value,
-                categoryId: categoryVal ? parseInt(categoryVal) : null,
-                newsStatus: document.getElementById('c_status').checked,
-                tagIds: selectedTags
-            };
-
-            try {
-                const response = await fetch('/StaffNews/Create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const res = await response.json();
-                if (response.ok) {
-                    showAlert(res.message, 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
-                    form.reset();
-                    form.classList.remove('was-validated');
-                    await loadTable();
-                } else {
-                    showAlert(res.message || 'Failed to create', 'danger');
-                    bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
-                }
-            } catch (err) {
-                showAlert('Network error', 'danger');
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+        function openCreateNewsModal() {
+            document.getElementById('createForm').reset();
+            document.getElementById('c_imageUrl').value = '';
+            document.getElementById('c_suggested_tags').innerHTML = '';
+            selectedAiTags.clear();
+            document.getElementById('createForm').classList.remove('was-validated');
+            new bootstrap.Modal(document.getElementById('createModal')).show();
         }
 
-        function openEditModal(id, title, headline, content, source, categoryId, status, tagIds) {
+        function openEditNewsModal(id, title, headline, content, source, categoryId, status, tagIds, imageUrl) {
             document.getElementById('e_id').value = id;
             document.getElementById('e_title').value = title;
             document.getElementById('e_headline').value = headline;
@@ -427,6 +397,9 @@
             document.getElementById('e_source').value = source || '';
             document.getElementById('e_category').value = categoryId || '';
             document.getElementById('e_status').checked = status;
+            document.getElementById('e_imageUrl').value = imageUrl || '';
+            document.getElementById('e_suggested_tags').innerHTML = '';
+            selectedAiTags.clear();
 
             const tagSelect = document.getElementById('e_tags');
             Array.from(tagSelect.options).forEach(opt => {
@@ -437,88 +410,280 @@
             new bootstrap.Modal(document.getElementById('editModal')).show();
         }
 
-        async function updateNews() {
+        async function uploadNewsImageAsync(fileInputId) {
+            const fileInput = document.getElementById(fileInputId);
+            if (!fileInput.files || fileInput.files.length === 0) return null;
+
+            const formData = new FormData();
+            formData.append('imageFile', fileInput.files[0]);
+
+            const res = await fetch('/StaffNews/UploadImage', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                return data.imageUrl;
+            }
+            throw new Error('Invalid image or upload failed');
+        }
+
+        async function submitCreateNewsArticle() {
+            const form = document.getElementById('createForm');
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+
+            confirmAction('Are you sure you want to create this news article?', async () => {
+                const btn = document.getElementById('btnCreate');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Saving...';
+                btn.disabled = true;
+
+                try {
+                    showLoading();
+                    let imageUrl = '';
+                    if (document.getElementById('c_imageFile').files.length > 0) {
+                        imageUrl = await uploadNewsImageAsync('c_imageFile');
+                    }
+
+                    const categoryVal = document.getElementById('c_category').value;
+                    const tagSelect = document.getElementById('c_tags');
+                    const selectedTags = Array.from(tagSelect.selectedOptions).map(opt => parseInt(opt.value));
+                    const content = document.getElementById('c_content').value;
+
+                    const data = {
+                        newsTitle: document.getElementById('c_title').value,
+                        headline: document.getElementById('c_headline').value,
+                        newsContent: content,
+                        newsSource: document.getElementById('c_source').value,
+                        categoryId: categoryVal ? parseInt(categoryVal) : null,
+                        newsStatus: document.getElementById('c_status').checked,
+                        tagIds: selectedTags,
+                        imageUrl: imageUrl
+                    };
+
+                    const response = await fetch('/StaffNews/Create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    const res = await response.json();
+                    if (response.ok) {
+                        showAlert(res.message, 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                        await loadTable();
+                        
+                        for (const tagName of selectedAiTags) {
+                            await recordSelectedSuggestedTagsAsync(content.substring(0, 50), tagName);
+                        }
+                    } else {
+                        showAlert(res.message || 'Failed to create', 'danger');
+                    }
+                } catch (err) {
+                    showAlert(err.message || 'Network error', 'danger');
+                } finally {
+                    hideLoading();
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        async function submitUpdateNewsArticle() {
             const form = document.getElementById('editForm');
             if (!form.checkValidity()) {
                 form.classList.add('was-validated');
                 return;
             }
 
-            const btn = document.getElementById('btnEdit');
+            confirmAction('Are you sure you want to update this news article?', async () => {
+                const btn = document.getElementById('btnEdit');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Updating...';
+                btn.disabled = true;
+
+                try {
+                    showLoading();
+                    let imageUrl = document.getElementById('e_imageUrl').value;
+                    if (document.getElementById('e_imageFile').files.length > 0) {
+                        imageUrl = await uploadNewsImageAsync('e_imageFile');
+                    }
+
+                    const id = document.getElementById('e_id').value;
+                    const categoryVal = document.getElementById('e_category').value;
+                    const tagSelect = document.getElementById('e_tags');
+                    const selectedTags = Array.from(tagSelect.selectedOptions).map(opt => parseInt(opt.value));
+                    const content = document.getElementById('e_content').value;
+
+                    const data = {
+                        newsTitle: document.getElementById('e_title').value,
+                        headline: document.getElementById('e_headline').value,
+                        newsContent: content,
+                        newsSource: document.getElementById('e_source').value,
+                        categoryId: categoryVal ? parseInt(categoryVal) : null,
+                        newsStatus: document.getElementById('e_status').checked,
+                        tagIds: selectedTags,
+                        imageUrl: imageUrl
+                    };
+
+                    const response = await fetch(`/StaffNews/Update/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const res = await response.json();
+                    if (response.ok) {
+                        showAlert(res.message, 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                        await loadTable();
+
+                        for (const tagName of selectedAiTags) {
+                            await recordSelectedSuggestedTagsAsync(content.substring(0, 50), tagName);
+                        }
+                    } else {
+                        showAlert(res.message || 'Failed to update', 'danger');
+                    }
+                } catch (err) {
+                    showAlert(err.message || 'Network error', 'danger');
+                } finally {
+                    hideLoading();
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        async function requestSuggestedTags(contentId, containerId) {
+            const content = document.getElementById(contentId).value;
+            if (!content.trim()) {
+                showAlert('Please enter article content before requesting tag suggestions.', 'warning');
+                return;
+            }
+            
+            const btn = document.getElementById(contentId === 'c_content' ? 'c_suggest_btn' : 'e_suggest_btn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = 'Updating...';
+            btn.innerHTML = 'Thinking...';
             btn.disabled = true;
 
-            const id = document.getElementById('e_id').value;
-            const categoryVal = document.getElementById('e_category').value;
-            const tagSelect = document.getElementById('e_tags');
-            const selectedTags = Array.from(tagSelect.selectedOptions).map(opt => parseInt(opt.value));
-
-            const data = {
-                newsTitle: document.getElementById('e_title').value,
-                headline: document.getElementById('e_headline').value,
-                newsContent: document.getElementById('e_content').value,
-                newsSource: document.getElementById('e_source').value,
-                categoryId: categoryVal ? parseInt(categoryVal) : null,
-                newsStatus: document.getElementById('e_status').checked,
-                tagIds: selectedTags
-            };
-
             try {
-                const response = await fetch(`/StaffNews/Update/${id}`, {
-                    method: 'PUT',
+                const response = await fetch('/StaffNews/SuggestTags', {
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({ content: content })
                 });
-                const res = await response.json();
+
                 if (response.ok) {
-                    showAlert(res.message, 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-                    await loadTable();
+                    const data = await response.json();
+                    renderSuggestedTagChips(data.tags, containerId);
                 } else {
-                    showAlert(res.message || 'Failed to update', 'danger');
-                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                    const error = await response.json();
+                    showAlert(error.message || 'AI API is currently unavailable.', 'warning');
                 }
             } catch (err) {
-                showAlert('Network error', 'danger');
+                showAlert('Failed to connect to AI API.', 'warning');
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
         }
 
-        async function duplicateNews(id) {
-            if (!confirm('Are you sure you want to duplicate this news?')) return;
+        function renderSuggestedTagChips(tags, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            if (!tags || tags.length === 0) {
+                container.innerHTML = '<span class="text-muted small">No suggestions found.</span>';
+                return;
+            }
+            
+            tags.forEach(t => {
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-info text-dark me-2 mb-2 p-2' + (selectedAiTags.has(t.name) ? ' border border-2 border-primary' : '');
+                badge.style.cursor = 'pointer';
+                badge.innerText = `${t.name} ${Math.round(t.confidence * 100)}%`;
+                badge.onclick = () => selectSuggestedTag(t.name, containerId);
+                container.appendChild(badge);
+            });
+        }
 
-            try {
-                const response = await fetch(`/StaffNews/Duplicate/${id}`, { method: 'POST' });
-                const res = await response.json();
-                if (response.ok) {
-                    showAlert(res.message, 'success');
-                    await loadTable();
-                } else {
-                    showAlert(res.message || 'Failed to duplicate', 'danger');
+        function selectSuggestedTag(tagName, containerId) {
+            const selectId = containerId === 'c_suggested_tags' ? 'c_tags' : 'e_tags';
+            const tagSelect = document.getElementById(selectId);
+            let found = false;
+
+            Array.from(tagSelect.options).forEach(opt => {
+                if (opt.text.toLowerCase() === tagName.toLowerCase()) {
+                    opt.selected = true;
+                    found = true;
                 }
-            } catch (err) {
-                showAlert('Network error', 'danger');
+            });
+
+            if (found) {
+                selectedAiTags.add(tagName);
+                showAlert(`Applied tag: ${tagName}`, 'success');
+                // Re-render chips to show border
+                const contentId = containerId === 'c_suggested_tags' ? 'c_content' : 'e_content';
+                // Note: we'd need the original tags array to fully re-render, 
+                // so we just add the border class directly to the clicked element in a more advanced implementation.
+                // For now, it's fine.
+            } else {
+                showAlert(`Tag '${tagName}' does not exist in the system.`, 'warning');
             }
         }
 
-        async function deleteNews(id) {
-            if (!confirm('Are you sure you want to delete this news?')) return;
-
+        async function recordSelectedSuggestedTagsAsync(keyword, tagName) {
             try {
-                const response = await fetch(`/StaffNews/Delete/${id}`, { method: 'DELETE' });
-                const res = await response.json();
-                if (response.ok) {
-                    showAlert(res.message, 'success');
-                    await loadTable();
-                } else {
-                    showAlert(res.message || 'Failed to delete', 'danger');
-                }
-            } catch (err) {
-                showAlert('Network error', 'danger');
+                await fetch('/StaffNews/RecordSelectedSuggestedTagsAsync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keyword: keyword, tagName: tagName })
+                });
+            } catch (e) {
+                console.warn('Failed to learn tag', e);
             }
+        }
+
+        function duplicateNews(id) {
+            confirmAction('Are you sure you want to duplicate this news?', async function() {
+                try {
+                    showLoading();
+                    const response = await fetch(`/StaffNews/Duplicate/${id}`, { method: 'POST' });
+                    const res = await response.json();
+                    if (response.ok) {
+                        showAlert(res.message, 'success');
+                        await loadTable();
+                    } else {
+                        showAlert(res.message || 'Failed to duplicate', 'danger');
+                    }
+                } catch (err) {
+                    showAlert('Network error', 'danger');
+                } finally {
+                    hideLoading();
+                }
+            });
+        }
+
+        function deleteNews(id) {
+            confirmAction('Are you sure you want to delete this news?', async function() {
+                try {
+                    showLoading();
+                    const response = await fetch(`/StaffNews/Delete/${id}`, { method: 'DELETE' });
+                    const res = await response.json();
+                    if (response.ok) {
+                        showAlert(res.message, 'success');
+                        await loadTable();
+                    } else {
+                        showAlert(res.message || 'Failed to delete', 'danger');
+                    }
+                } catch (err) {
+                    showAlert('Network error', 'danger');
+                } finally {
+                    hideLoading();
+                }
+            });
         }
     </script>
 }

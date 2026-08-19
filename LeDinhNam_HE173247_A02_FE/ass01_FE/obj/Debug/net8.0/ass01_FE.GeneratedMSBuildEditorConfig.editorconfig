@@ -27,12 +27,20 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = UHJlc2VudGF0aW9uXFZpZXdzXEFjY291bnRcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/MSI/Desktop/PRN232/PRN232_Block5/ASS02/LeDinhNam_HE173247_A02/LeDinhNam_HE173247_A02_FE/ass01_FE/Presentation/Views/AuditLog/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UHJlc2VudGF0aW9uXFZpZXdzXEF1ZGl0TG9nXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/MSI/Desktop/PRN232/PRN232_Block5/ASS02/LeDinhNam_HE173247_A02/LeDinhNam_HE173247_A02_FE/ass01_FE/Presentation/Views/Auth/Login.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UHJlc2VudGF0aW9uXFZpZXdzXEF1dGhcTG9naW4uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/MSI/Desktop/PRN232/PRN232_Block5/ASS02/LeDinhNam_HE173247_A02/LeDinhNam_HE173247_A02_FE/ass01_FE/Presentation/Views/Category/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UHJlc2VudGF0aW9uXFZpZXdzXENhdGVnb3J5XEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/MSI/Desktop/PRN232/PRN232_Block5/ASS02/LeDinhNam_HE173247_A02/LeDinhNam_HE173247_A02_FE/ass01_FE/Presentation/Views/Dashboard/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UHJlc2VudGF0aW9uXFZpZXdzXERhc2hib2FyZFxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/MSI/Desktop/PRN232/PRN232_Block5/ASS02/LeDinhNam_HE173247_A02/LeDinhNam_HE173247_A02_FE/ass01_FE/Presentation/Views/Home/Detail.cshtml]

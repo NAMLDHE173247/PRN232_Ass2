@@ -33,6 +33,12 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<TokenRefreshCoordinator>();
 builder.Services.AddTransient<ApiLoggingHandler>();
 builder.Services.AddTransient<AuthenticatedHttpClientHandler>();
+builder.Services.AddScoped<ass01_FE.Infrastructure.Services.IOfflineCacheService, ass01_FE.Infrastructure.Services.OfflineCacheService>();
+builder.Services.AddScoped<ass01_FE.Infrastructure.Services.OfflineNewsService>();
+builder.Services.AddScoped<ass01_FE.Infrastructure.Services.OfflineCategoryService>();
+builder.Services.AddScoped<ass01_FE.Infrastructure.Services.OfflineTagService>();
+builder.Services.AddScoped<ass01_FE.Infrastructure.Services.OfflineDashboardService>();
+builder.Services.AddHostedService<ass01_FE.Infrastructure.Workers.CacheRefreshWorker>();
 
 // Polly Policy (Idempotent only: GET/HEAD)
 static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
@@ -66,6 +72,11 @@ builder.Services.AddHttpClient<NewsApiService>(client => client.BaseAddress = ne
     .AddHttpMessageHandler<AuthenticatedHttpClientHandler>()
     .AddPolicyHandler(request => request.Method == HttpMethod.Get || request.Method == HttpMethod.Head ? GetRetryPolicy() : Policy.NoOpAsync<HttpResponseMessage>());
 
+builder.Services.AddHttpClient<AuditLogApiService>(client => client.BaseAddress = new Uri(coreApiUrl))
+    .AddHttpMessageHandler<ApiLoggingHandler>()
+    .AddHttpMessageHandler<AuthenticatedHttpClientHandler>()
+    .AddPolicyHandler(request => request.Method == HttpMethod.Get || request.Method == HttpMethod.Head ? GetRetryPolicy() : Policy.NoOpAsync<HttpResponseMessage>());
+
 builder.Services.AddHttpClient<AccountApiService>(client => client.BaseAddress = new Uri(coreApiUrl))
     .AddHttpMessageHandler<ApiLoggingHandler>()
     .AddHttpMessageHandler<AuthenticatedHttpClientHandler>()
@@ -92,12 +103,12 @@ builder.Services.AddHttpClient<ProfileApiService>(client => client.BaseAddress =
     .AddPolicyHandler(request => request.Method == HttpMethod.Get || request.Method == HttpMethod.Head ? GetRetryPolicy() : Policy.NoOpAsync<HttpResponseMessage>());
 
 // 3. New Clients for Analytics & AI
-builder.Services.AddHttpClient("AnalyticsApiClient", client => client.BaseAddress = new Uri(analyticsApiUrl))
+builder.Services.AddHttpClient<AnalyticsApiClient>(client => client.BaseAddress = new Uri(analyticsApiUrl))
     .AddHttpMessageHandler<ApiLoggingHandler>()
     .AddHttpMessageHandler<AuthenticatedHttpClientHandler>()
     .AddPolicyHandler(request => request.Method == HttpMethod.Get || request.Method == HttpMethod.Head ? GetRetryPolicy() : Policy.NoOpAsync<HttpResponseMessage>());
 
-builder.Services.AddHttpClient("AiApiClient", client => client.BaseAddress = new Uri(aiApiUrl))
+builder.Services.AddHttpClient<AiApiClient>(client => client.BaseAddress = new Uri(aiApiUrl))
     .AddHttpMessageHandler<ApiLoggingHandler>()
     .AddHttpMessageHandler<AuthenticatedHttpClientHandler>()
     .AddPolicyHandler(request => request.Method == HttpMethod.Get || request.Method == HttpMethod.Head ? GetRetryPolicy() : Policy.NoOpAsync<HttpResponseMessage>());

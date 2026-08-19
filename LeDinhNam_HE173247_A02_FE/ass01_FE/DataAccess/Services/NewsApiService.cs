@@ -151,4 +151,30 @@ public class NewsApiService
     {
         return await _httpClient.PostAsync($"api/news/{id}/duplicate", null);
     }
+
+    public async Task<string?> UploadNewsImageAsync(Microsoft.AspNetCore.Http.IFormFile imageFile)
+    {
+        using var content = new MultipartFormDataContent();
+        using var fileStream = imageFile.OpenReadStream();
+        using var streamContent = new StreamContent(fileStream);
+        streamContent.Headers.ContentType = new MediaTypeHeaderValue(imageFile.ContentType);
+        content.Add(streamContent, "file", imageFile.FileName);
+
+        var response = await _httpClient.PostAsync("api/news/upload-image", content);
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+            if (result.TryGetProperty("imageUrl", out var imageUrlElement))
+            {
+                return imageUrlElement.GetString();
+            }
+        }
+        return null;
+    }
+
+    public async Task<bool> IncrementNewsViewCountAsync(string id)
+    {
+        var response = await _httpClient.PostAsync($"api/news/{id}/view", null);
+        return response.IsSuccessStatusCode;
+    }
 }

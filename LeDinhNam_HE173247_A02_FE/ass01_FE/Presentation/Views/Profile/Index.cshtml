@@ -84,11 +84,7 @@
 @section Scripts {
     <script>
         function showAlert(msg, type = 'success') {
-            const box = document.getElementById('alertContainer');
-            box.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show">
-                ${msg}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>`;
+            showAppToast("Notification", msg, type);
         }
 
         async function updateProfile() {
@@ -98,36 +94,40 @@
                 return;
             }
 
-            const btn = document.getElementById('btnUpdate');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Updating...';
-            btn.disabled = true;
+            confirmAction('Are you sure you want to update your profile?', async () => {
+                const btn = document.getElementById('btnUpdate');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Updating...';
+                btn.disabled = true;
 
-            const data = {
-                accountName: document.getElementById('AccountName').value,
-                accountEmail: document.getElementById('AccountEmail').value
-            };
+                const data = {
+                    accountName: document.getElementById('AccountName').value,
+                    accountEmail: document.getElementById('AccountEmail').value
+                };
 
-            try {
-                const response = await fetch('/Profile/Update', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                
-                const res = await response.json();
-                
-                if (response.ok) {
-                    showAlert(res.message, 'success');
-                } else {
-                    showAlert(res.message || 'Failed to update profile.', 'danger');
+                try {
+                    showLoading();
+                    const response = await fetch('/Profile/Update', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    const res = await response.json();
+                    
+                    if (response.ok) {
+                        showAlert(res.message, 'success');
+                    } else {
+                        showAlert(res.message || 'Failed to update profile.', 'danger');
+                    }
+                } catch (err) {
+                    showAlert('Network error occurred.', 'danger');
+                } finally {
+                    hideLoading();
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                 }
-            } catch (err) {
-                showAlert('Network error occurred.', 'danger');
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+            });
         }
 
         async function changePassword() {
@@ -136,7 +136,7 @@
             const confirmPwd = document.getElementById('ConfirmNewPassword').value;
             
             if (newPwd !== confirmPwd) {
-                showPwdAlert('New password and confirm password do not match.', 'danger');
+                showAppToast('Notification', 'New password and confirm password do not match.', 'danger');
                 return;
             }
 
@@ -145,49 +145,45 @@
                 return;
             }
 
-            const btn = document.getElementById('btnChangePwd');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Changing...';
-            btn.disabled = true;
+            confirmAction('Are you sure you want to change your password?', async () => {
+                const btn = document.getElementById('btnChangePwd');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Changing...';
+                btn.disabled = true;
 
-            const data = {
-                currentPassword: document.getElementById('CurrentPassword').value,
-                newPassword: newPwd,
-                confirmNewPassword: confirmPwd
-            };
+                const data = {
+                    currentPassword: document.getElementById('CurrentPassword').value,
+                    newPassword: newPwd,
+                    confirmNewPassword: confirmPwd
+                };
 
-            const accountId = @(Model?.AccountId ?? 0);
+                const accountId = @(Model?.AccountId ?? 0);
 
-            try {
-                const response = await fetch(`/Profile/ChangePassword/${accountId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                
-                const res = await response.json();
-                
-                if (response.ok) {
-                    showPwdAlert(res.message, 'success');
-                    form.reset();
-                    form.classList.remove('was-validated');
-                } else {
-                    showPwdAlert(res.message || 'Failed to change password.', 'danger');
+                try {
+                    showLoading();
+                    const response = await fetch(`/Profile/ChangePassword/${accountId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    const res = await response.json();
+                    
+                    if (response.ok) {
+                        showAppToast('Notification', res.message, 'success');
+                        form.reset();
+                        form.classList.remove('was-validated');
+                    } else {
+                        showAppToast('Notification', res.message || 'Failed to change password.', 'danger');
+                    }
+                } catch (err) {
+                    showAppToast('Notification', 'Network error occurred.', 'danger');
+                } finally {
+                    hideLoading();
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                 }
-            } catch (err) {
-                showPwdAlert('Network error occurred.', 'danger');
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        }
-
-        function showPwdAlert(msg, type = 'success') {
-            const box = document.getElementById('pwdAlertContainer');
-            box.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show">
-                ${msg}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>`;
+            });
         }
     </script>
 }

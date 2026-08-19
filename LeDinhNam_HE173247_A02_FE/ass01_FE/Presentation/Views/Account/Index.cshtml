@@ -159,11 +159,7 @@
 @section Scripts {
     <script>
         function showAlert(msg, type = 'success') {
-            const box = document.getElementById('alertContainer');
-            box.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show">
-                ${msg}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>`;
+            showAppToast("Notification", msg, type);
         }
 
         async function loadTable() {
@@ -215,41 +211,45 @@
                 return;
             }
 
-            const btn = document.getElementById('btnCreate');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Saving...';
-            btn.disabled = true;
+            confirmAction('Are you sure you want to create this account?', async () => {
+                const btn = document.getElementById('btnCreate');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Saving...';
+                btn.disabled = true;
 
-            const data = {
-                accountName: document.getElementById('c_name').value,
-                accountEmail: document.getElementById('c_email').value,
-                accountPassword: document.getElementById('c_pass').value,
-                accountRole: parseInt(document.getElementById('c_role').value)
-            };
+                const data = {
+                    accountName: document.getElementById('c_name').value,
+                    accountEmail: document.getElementById('c_email').value,
+                    accountPassword: document.getElementById('c_pass').value,
+                    accountRole: parseInt(document.getElementById('c_role').value)
+                };
 
-            try {
-                const response = await fetch('/Account/Create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const res = await response.json();
-                if (response.ok) {
-                    showAlert(res.message, 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
-                    form.reset();
-                    form.classList.remove('was-validated');
-                    await loadTable();
-                } else {
-                    showAlert(res.message || 'Failed to create', 'danger');
-                    bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                try {
+                    showLoading();
+                    const response = await fetch('/Account/Create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const res = await response.json();
+                    if (response.ok) {
+                        showAlert(res.message, 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                        form.reset();
+                        form.classList.remove('was-validated');
+                        await loadTable();
+                    } else {
+                        showAlert(res.message || 'Failed to create', 'danger');
+                        bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                    }
+                } catch (err) {
+                    showAlert('Network error', 'danger');
+                } finally {
+                    hideLoading();
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                 }
-            } catch (err) {
-                showAlert('Network error', 'danger');
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+            });
         }
 
         function openEditModal(id, name, email, role) {
@@ -269,56 +269,63 @@
                 return;
             }
 
-            const btn = document.getElementById('btnEdit');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Updating...';
-            btn.disabled = true;
+            confirmAction('Are you sure you want to update this account?', async () => {
+                const btn = document.getElementById('btnEdit');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Updating...';
+                btn.disabled = true;
 
-            const data = {
-                accountId: parseInt(document.getElementById('e_id').value),
-                accountName: document.getElementById('e_name').value,
-                accountEmail: document.getElementById('e_email').value,
-                accountRole: parseInt(document.getElementById('e_role').value)
-            };
+                const data = {
+                    accountId: parseInt(document.getElementById('e_id').value),
+                    accountName: document.getElementById('e_name').value,
+                    accountEmail: document.getElementById('e_email').value,
+                    accountRole: parseInt(document.getElementById('e_role').value)
+                };
 
-            try {
-                const response = await fetch('/Account/Update', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const res = await response.json();
-                if (response.ok) {
-                    showAlert(res.message, 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-                    await loadTable();
-                } else {
-                    showAlert(res.message || 'Failed to update', 'danger');
-                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                try {
+                    showLoading();
+                    const response = await fetch('/Account/Update', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const res = await response.json();
+                    if (response.ok) {
+                        showAlert(res.message, 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                        await loadTable();
+                    } else {
+                        showAlert(res.message || 'Failed to update', 'danger');
+                        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                    }
+                } catch (err) {
+                    showAlert('Network error', 'danger');
+                } finally {
+                    hideLoading();
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                 }
-            } catch (err) {
-                showAlert('Network error', 'danger');
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+            });
         }
 
-        async function deleteAccount(id) {
-            if (!confirm('Are you sure you want to delete this account?')) return;
-
-            try {
-                const response = await fetch(`/Account/Delete/${id}`, { method: 'DELETE' });
-                const res = await response.json();
-                if (response.ok) {
-                    showAlert(res.message, 'success');
-                    await loadTable();
-                } else {
-                    showAlert(res.message || 'Failed to delete account', 'danger');
+        function deleteAccount(id) {
+            confirmAction('Are you sure you want to delete this account?', async function() {
+                try {
+                    showLoading();
+                    const response = await fetch(`/Account/Delete/${id}`, { method: 'DELETE' });
+                    const res = await response.json();
+                    if (response.ok) {
+                        showAlert(res.message, 'success');
+                        await loadTable();
+                    } else {
+                        showAlert(res.message || 'Failed to delete account', 'danger');
+                    }
+                } catch (err) {
+                    showAlert('Network error', 'danger');
+                } finally {
+                    hideLoading();
                 }
-            } catch (err) {
-                showAlert('Network error', 'danger');
-            }
+            });
         }
     </script>
 }

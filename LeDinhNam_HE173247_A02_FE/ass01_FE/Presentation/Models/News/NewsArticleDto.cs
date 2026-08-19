@@ -11,6 +11,7 @@ public class NewsArticleDto
     public DateTime? CreatedDate { get; set; }
     public string? NewsContent { get; set; }
     public string? NewsSource { get; set; }
+    public string? ImageUrl { get; set; }
     public short? CategoryId { get; set; }
     public string? CategoryName { get; set; }
     public bool? NewsStatus { get; set; }
@@ -19,6 +20,7 @@ public class NewsArticleDto
     public short? UpdatedById { get; set; }
     public string? UpdatedByName { get; set; }
     public DateTime? ModifiedDate { get; set; }
+    public int ViewCount { get; set; }
     public List<TagDto> Tags { get; set; } = new();
 }
 

@@ -5,7 +5,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Tag Management</h2>
-    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createModal">
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createModal" @(ViewBag.IsOffline == true ? "disabled title=\"Create is disabled in offline mode\"" : "")>
         + Create Tag
     </button>
 </div>
@@ -33,8 +33,8 @@
                         <td>@tag.Note</td>
                         <td>
                             <button class="btn btn-sm btn-outline-info" onclick="viewArticles(@tag.TagId, '@tag.TagName?.Replace("'", "\\'")')">Articles</button>
-                            <button class="btn btn-sm btn-outline-primary" onclick="openEditModal(@tag.TagId, '@tag.TagName?.Replace("'", "\\'")', '@tag.Note?.Replace("'", "\\'")')">Edit</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTag(@tag.TagId)">Delete</button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="openEditModal(@tag.TagId, '@tag.TagName?.Replace("'", "\\'")', '@tag.Note?.Replace("'", "\\'")')" @(ViewBag.IsOffline == true ? "disabled" : "")>Edit</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTag(@tag.TagId)" @(ViewBag.IsOffline == true ? "disabled" : "")>Delete</button>
                         </td>
                     </tr>
                 }
@@ -142,11 +142,7 @@
 @section Scripts {
     <script>
         function showAlert(msg, type = 'success') {
-            const box = document.getElementById('alertContainer');
-            box.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show">
-                ${msg}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>`;
+            showAppToast("Notification", msg, type);
         }
 
         async function loadTable() {
@@ -190,39 +186,43 @@
                 return;
             }
 
-            const btn = document.getElementById('btnCreate');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Saving...';
-            btn.disabled = true;
+            confirmAction('Are you sure you want to create this tag?', async () => {
+                const btn = document.getElementById('btnCreate');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Saving...';
+                btn.disabled = true;
 
-            const data = {
-                tagName: document.getElementById('c_name').value,
-                note: document.getElementById('c_note').value
-            };
+                const data = {
+                    tagName: document.getElementById('c_name').value,
+                    note: document.getElementById('c_note').value
+                };
 
-            try {
-                const response = await fetch('/Tag/Create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const res = await response.json();
-                if (response.ok) {
-                    showAlert(res.message, 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
-                    form.reset();
-                    form.classList.remove('was-validated');
-                    await loadTable();
-                } else {
-                    showAlert(res.message || 'Failed to create', 'danger');
-                    bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                try {
+                    showLoading();
+                    const response = await fetch('/Tag/Create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const res = await response.json();
+                    if (response.ok) {
+                        showAlert(res.message, 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                        form.reset();
+                        form.classList.remove('was-validated');
+                        await loadTable();
+                    } else {
+                        showAlert(res.message || 'Failed to create', 'danger');
+                        bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                    }
+                } catch (err) {
+                    showAlert('Network error', 'danger');
+                } finally {
+                    hideLoading();
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                 }
-            } catch (err) {
-                showAlert('Network error', 'danger');
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+            });
         }
 
         function openEditModal(id, name, note) {
@@ -241,55 +241,62 @@
                 return;
             }
 
-            const btn = document.getElementById('btnEdit');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Updating...';
-            btn.disabled = true;
+            confirmAction('Are you sure you want to update this tag?', async () => {
+                const btn = document.getElementById('btnEdit');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Updating...';
+                btn.disabled = true;
 
-            const id = document.getElementById('e_id').value;
-            const data = {
-                tagName: document.getElementById('e_name').value,
-                note: document.getElementById('e_note').value
-            };
+                const id = document.getElementById('e_id').value;
+                const data = {
+                    tagName: document.getElementById('e_name').value,
+                    note: document.getElementById('e_note').value
+                };
 
-            try {
-                const response = await fetch(`/Tag/Update/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const res = await response.json();
-                if (response.ok) {
-                    showAlert(res.message, 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-                    await loadTable();
-                } else {
-                    showAlert(res.message || 'Failed to update', 'danger');
-                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                try {
+                    showLoading();
+                    const response = await fetch(`/Tag/Update/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const res = await response.json();
+                    if (response.ok) {
+                        showAlert(res.message, 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                        await loadTable();
+                    } else {
+                        showAlert(res.message || 'Failed to update', 'danger');
+                        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                    }
+                } catch (err) {
+                    showAlert('Network error', 'danger');
+                } finally {
+                    hideLoading();
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                 }
-            } catch (err) {
-                showAlert('Network error', 'danger');
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+            });
         }
 
-        async function deleteTag(id) {
-            if (!confirm('Are you sure you want to delete this tag?')) return;
-
-            try {
-                const response = await fetch(`/Tag/Delete/${id}`, { method: 'DELETE' });
-                const res = await response.json();
-                if (response.ok) {
-                    showAlert(res.message, 'success');
-                    await loadTable();
-                } else {
-                    showAlert(res.message || 'Failed to delete', 'danger');
+        function deleteTag(id) {
+            confirmAction('Are you sure you want to delete this tag?', async function() {
+                try {
+                    showLoading();
+                    const response = await fetch(`/Tag/Delete/${id}`, { method: 'DELETE' });
+                    const res = await response.json();
+                    if (response.ok) {
+                        showAlert(res.message, 'success');
+                        await loadTable();
+                    } else {
+                        showAlert(res.message || 'Failed to delete', 'danger');
+                    }
+                } catch (err) {
+                    showAlert('Network error', 'danger');
+                } finally {
+                    hideLoading();
                 }
-            } catch (err) {
-                showAlert('Network error', 'danger');
-            }
+            });
         }
 
         async function viewArticles(id, name) {

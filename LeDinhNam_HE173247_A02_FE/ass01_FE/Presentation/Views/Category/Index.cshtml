@@ -19,7 +19,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Category Management</h2>
-    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createModal">
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createModal" @(ViewBag.IsOffline == true ? "disabled title=\"Create is disabled in offline mode\"" : "")>
         + Create Category
     </button>
 </div>
@@ -77,8 +77,8 @@
                         <td>@cat.ArticleCount</td>
                         <td>
                             <button class="btn btn-sm btn-outline-info" onclick="viewArticles(@cat.CategoryId, '@escapeJs(cat.CategoryName)')">Articles</button>
-                            <button class="btn btn-sm btn-outline-primary" onclick="openEditModal(@cat.CategoryId, '@escapeJs(cat.CategoryName)', '@escapeJs(cat.CategoryDescription)', @(cat.ParentCategoryId?.ToString() ?? "null"), @(cat.IsActive == true ? "true" : "false"))">Edit</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory(@cat.CategoryId)">Delete</button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="openEditModal(@cat.CategoryId, '@escapeJs(cat.CategoryName)', '@escapeJs(cat.CategoryDescription)', @(cat.ParentCategoryId?.ToString() ?? "null"), @(cat.IsActive == true ? "true" : "false"))" @(ViewBag.IsOffline == true ? "disabled" : "")>Edit</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory(@cat.CategoryId)" @(ViewBag.IsOffline == true ? "disabled" : "")>Delete</button>
                         </td>
                     </tr>
                 }
@@ -219,11 +219,7 @@
 @section Scripts {
     <script>
         function showAlert(msg, type = 'success') {
-            const box = document.getElementById('alertContainer');
-            box.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show">
-                ${msg}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>`;
+            showAppToast("Notification", msg, type);
         }
 
         async function loadTable() {
@@ -277,42 +273,46 @@
                 return;
             }
 
-            const btn = document.getElementById('btnCreate');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Saving...';
-            btn.disabled = true;
+            confirmAction('Are you sure you want to create this category?', async () => {
+                const btn = document.getElementById('btnCreate');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Saving...';
+                btn.disabled = true;
 
-            const parentVal = document.getElementById('c_parent').value;
-            const data = {
-                categoryName: document.getElementById('c_name').value,
-                categoryDescription: document.getElementById('c_desc').value,
-                parentCategoryId: parentVal ? parseInt(parentVal) : null,
-                isActive: document.getElementById('c_active').checked
-            };
+                const parentVal = document.getElementById('c_parent').value;
+                const data = {
+                    categoryName: document.getElementById('c_name').value,
+                    categoryDescription: document.getElementById('c_desc').value,
+                    parentCategoryId: parentVal ? parseInt(parentVal) : null,
+                    isActive: document.getElementById('c_active').checked
+                };
 
-            try {
-                const response = await fetch('/Category/Create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const res = await response.json();
-                if (response.ok) {
-                    showAlert(res.message, 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
-                    form.reset();
-                    form.classList.remove('was-validated');
-                    await loadTable();
-                } else {
-                    showAlert(res.message || 'Failed to create', 'danger');
-                    bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                try {
+                    showLoading();
+                    const response = await fetch('/Category/Create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const res = await response.json();
+                    if (response.ok) {
+                        showAlert(res.message, 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                        form.reset();
+                        form.classList.remove('was-validated');
+                        await loadTable();
+                    } else {
+                        showAlert(res.message || 'Failed to create', 'danger');
+                        bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                    }
+                } catch (err) {
+                    showAlert('Network error', 'danger');
+                } finally {
+                    hideLoading();
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                 }
-            } catch (err) {
-                showAlert('Network error', 'danger');
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+            });
         }
 
         function openEditModal(id, name, desc, parentId, isActive) {
@@ -333,58 +333,65 @@
                 return;
             }
 
-            const btn = document.getElementById('btnEdit');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Updating...';
-            btn.disabled = true;
+            confirmAction('Are you sure you want to update this category?', async () => {
+                const btn = document.getElementById('btnEdit');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Updating...';
+                btn.disabled = true;
 
-            const id = document.getElementById('e_id').value;
-            const parentVal = document.getElementById('e_parent').value;
-            const data = {
-                categoryName: document.getElementById('e_name').value,
-                categoryDescription: document.getElementById('e_desc').value,
-                parentCategoryId: parentVal ? parseInt(parentVal) : null,
-                isActive: document.getElementById('e_active').checked
-            };
+                const id = document.getElementById('e_id').value;
+                const parentVal = document.getElementById('e_parent').value;
+                const data = {
+                    categoryName: document.getElementById('e_name').value,
+                    categoryDescription: document.getElementById('e_desc').value,
+                    parentCategoryId: parentVal ? parseInt(parentVal) : null,
+                    isActive: document.getElementById('e_active').checked
+                };
 
-            try {
-                const response = await fetch(`/Category/Update/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const res = await response.json();
-                if (response.ok) {
-                    showAlert(res.message, 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-                    await loadTable();
-                } else {
-                    showAlert(res.message || 'Failed to update', 'danger');
-                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                try {
+                    showLoading();
+                    const response = await fetch(`/Category/Update/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const res = await response.json();
+                    if (response.ok) {
+                        showAlert(res.message, 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                        await loadTable();
+                    } else {
+                        showAlert(res.message || 'Failed to update', 'danger');
+                        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                    }
+                } catch (err) {
+                    showAlert('Network error', 'danger');
+                } finally {
+                    hideLoading();
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                 }
-            } catch (err) {
-                showAlert('Network error', 'danger');
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+            });
         }
 
-        async function deleteCategory(id) {
-            if (!confirm('Are you sure you want to delete this category?')) return;
-
-            try {
-                const response = await fetch(`/Category/Delete/${id}`, { method: 'DELETE' });
-                const res = await response.json();
-                if (response.ok) {
-                    showAlert(res.message, 'success');
-                    await loadTable();
-                } else {
-                    showAlert(res.message || 'Failed to delete', 'danger');
+        function deleteCategory(id) {
+            confirmAction('Are you sure you want to delete this category?', async function() {
+                try {
+                    showLoading();
+                    const response = await fetch(`/Category/Delete/${id}`, { method: 'DELETE' });
+                    const res = await response.json();
+                    if (response.ok) {
+                        showAlert(res.message, 'success');
+                        await loadTable();
+                    } else {
+                        showAlert(res.message || 'Failed to delete', 'danger');
+                    }
+                } catch (err) {
+                    showAlert('Network error', 'danger');
+                } finally {
+                    hideLoading();
                 }
-            } catch (err) {
-                showAlert('Network error', 'danger');
-            }
+            });
         }
         async function viewArticles(id, name) {
             document.getElementById('articlesModalTitle').innerText = 'Articles for Category: ' + name;

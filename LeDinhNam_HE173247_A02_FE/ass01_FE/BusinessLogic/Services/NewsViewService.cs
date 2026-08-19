@@ -7,24 +7,30 @@ namespace ass01_FE.BusinessLogic.Services;
 
 public class NewsViewService
 {
-    private readonly NewsApiService _newsApiService;
-    private readonly CategoryApiService _categoryApiService;
-    private readonly TagApiService _tagApiService;
+    private readonly ass01_FE.Infrastructure.Services.OfflineNewsService _offlineNewsService;
+    private readonly ass01_FE.Infrastructure.Services.OfflineCategoryService _offlineCategoryService;
+    private readonly ass01_FE.Infrastructure.Services.OfflineTagService _offlineTagService;
 
-    public NewsViewService(NewsApiService newsApiService, CategoryApiService categoryApiService, TagApiService tagApiService)
+    public NewsViewService(
+        ass01_FE.Infrastructure.Services.OfflineNewsService offlineNewsService, 
+        ass01_FE.Infrastructure.Services.OfflineCategoryService offlineCategoryService, 
+        ass01_FE.Infrastructure.Services.OfflineTagService offlineTagService)
     {
-        _newsApiService = newsApiService;
-        _categoryApiService = categoryApiService;
-        _tagApiService = tagApiService;
+        _offlineNewsService = offlineNewsService;
+        _offlineCategoryService = offlineCategoryService;
+        _offlineTagService = offlineTagService;
     }
 
-    public async Task<(IEnumerable<object> Items, int Count, CategoryListResult? Categories, IEnumerable<object>? Tags)> GetStaffNewsDataAsync(
+    public async Task<(IEnumerable<object> Items, int Count, CategoryListResult? Categories, IEnumerable<object>? Tags, bool IsOffline)> GetStaffNewsDataAsync(
         string? keyword, short? categoryId, string? tagName, DateTime? startDate, DateTime? endDate, string? authorName, bool? newsStatus, int skip, int top)
     {
-        var (items, count) = await _newsApiService.GetStaffNewsAsync(keyword, categoryId, tagName, startDate, endDate, authorName, newsStatus, skip, top);
-        var categories = await _categoryApiService.GetCategoriesAsync(null, 0, 100);
-        var tags = await _tagApiService.GetTagsAsync();
+        var newsResult = await _offlineNewsService.GetStaffNewsWithOfflineFallbackAsync(keyword, categoryId, tagName, startDate, endDate, authorName, newsStatus, skip, top);
+        var categoriesResult = await _offlineCategoryService.GetCategoriesWithOfflineFallbackAsync();
+        var tagsResult = await _offlineTagService.GetTagsWithOfflineFallbackAsync();
 
-        return (items, count, categories, tags);
+        var categories = categoriesResult.Data;
+        var isOffline = newsResult.IsOffline || categoriesResult.IsOffline || tagsResult.IsOffline;
+
+        return (newsResult.Data.Items, newsResult.Data.TotalCount, categories, tagsResult.Data, isOffline);
     }
 }

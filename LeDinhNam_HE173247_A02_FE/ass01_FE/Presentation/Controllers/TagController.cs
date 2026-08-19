@@ -3,14 +3,19 @@ using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using ass01_FE.DataAccess.Services;
 
+using ass01_FE.Infrastructure.Filters;
+
 namespace ass01_FE.Presentation.Controllers;
 
+[RoleAuthorize("Staff")]
 public class TagController : Controller
 {
+    private readonly ass01_FE.Infrastructure.Services.OfflineTagService _offlineTagService;
     private readonly TagApiService _tagApiService;
 
-    public TagController(TagApiService tagApiService)
+    public TagController(ass01_FE.Infrastructure.Services.OfflineTagService offlineTagService, TagApiService tagApiService)
     {
+        _offlineTagService = offlineTagService;
         _tagApiService = tagApiService;
     }
 
@@ -28,9 +33,15 @@ public class TagController : Controller
             return RedirectToAction("Index", "Home");
         }
 
-        var tags = await _tagApiService.GetTagsAsync();
+        var result = await _offlineTagService.GetTagsWithOfflineFallbackAsync();
         
-        return View(tags);
+        ViewBag.IsOffline = result.IsOffline;
+        if (result.IsOffline)
+        {
+            ViewBag.ErrorMessage = result.ErrorMessage;
+        }
+
+        return View(result.Data);
     }
 
     [HttpGet]

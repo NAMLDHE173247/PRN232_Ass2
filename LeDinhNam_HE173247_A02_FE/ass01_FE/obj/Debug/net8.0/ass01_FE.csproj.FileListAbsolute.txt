@@ -106,3 +106,17 @@ C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam
 C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Polly.dll
 C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Polly.Extensions.Http.dll
 C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\obj\Debug\net8.0\ass01_FE.csproj.Up2Date
+C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Microsoft.Extensions.Configuration.dll
+C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Microsoft.Extensions.Configuration.Abstractions.dll
+C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Microsoft.Extensions.Configuration.Binder.dll
+C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.dll
+C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Microsoft.Extensions.Diagnostics.dll
+C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Microsoft.Extensions.Diagnostics.Abstractions.dll
+C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Microsoft.Extensions.Http.dll
+C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Microsoft.Extensions.Logging.dll
+C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Microsoft.Extensions.Logging.Abstractions.dll
+C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Microsoft.Extensions.Options.dll
+C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Microsoft.Extensions.Options.ConfigurationExtensions.dll
+C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Microsoft.Extensions.Primitives.dll
+C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\System.Diagnostics.DiagnosticSource.dll

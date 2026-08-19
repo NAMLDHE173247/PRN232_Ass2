@@ -8,10 +8,14 @@ namespace ass01_FE.Presentation.Controllers;
 
 public class HomeController : Controller
 {
+    private readonly ass01_FE.Infrastructure.Services.OfflineNewsService _offlineNewsService;
+    private readonly ass01_FE.Infrastructure.Clients.AnalyticsApiClient _analyticsApiClient;
     private readonly NewsApiService _newsApiService;
 
-    public HomeController(NewsApiService newsApiService)
+    public HomeController(ass01_FE.Infrastructure.Services.OfflineNewsService offlineNewsService, ass01_FE.Infrastructure.Clients.AnalyticsApiClient analyticsApiClient, NewsApiService newsApiService)
     {
+        _offlineNewsService = offlineNewsService;
+        _analyticsApiClient = analyticsApiClient;
         _newsApiService = newsApiService;
     }
 
@@ -21,32 +25,33 @@ public class HomeController : Controller
         int pageSize = 100;
         if (page < 1) page = 1;
 
-        int skip = (page - 1) * pageSize;
-
-        // Fetch paginated active news from backend
-        var (items, totalCount) = await _newsApiService.GetActiveNewsAsync(keyword, skip, pageSize);
-
-        var totalPages = (int)System.Math.Ceiling(totalCount / (double)pageSize);
-        
+        var result = await _offlineNewsService.GetActiveNewsWithOfflineFallbackAsync(keyword, (page - 1) * pageSize, pageSize);
+        var totalPages = (int)System.Math.Ceiling(result.Data.TotalCount / (double)pageSize);
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
-
-        return View(items);
+        ViewBag.IsOffline = result.IsOffline;
+        return View(result.Data.Items);
     }
 
     public async Task<IActionResult> Detail(string id)
     {
+        // 1. Increment View Count
+        await _newsApiService.IncrementNewsViewCountAsync(id);
+
+        // 2. Fetch Article
         var article = await _newsApiService.GetNewsByIdAsync(id);
         if (article == null)
         {
             return NotFound();
         }
 
-        var related = await _newsApiService.GetRelatedNewsAsync(id);
+        // 3. Fetch Recommended Articles (max 3)
+        var related = await _analyticsApiClient.GetRecommendedArticlesAsync(id);
+        var topRelated = related?.Take(3).ToList() ?? new List<ass01_FE.Presentation.Models.News.NewsArticleDto>();
 
         dynamic model = new ExpandoObject();
         model.Article = article;
-        model.Related = related;
+        model.Related = topRelated;
 
         return View(model);
     }

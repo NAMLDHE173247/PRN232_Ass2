@@ -3,15 +3,20 @@ using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using ass01_FE.DataAccess.Services;
 
+using ass01_FE.Infrastructure.Filters;
+
 namespace ass01_FE.Presentation.Controllers;
 
+[RoleAuthorize("Staff")]
 public class CategoryController : Controller
 {
+    private readonly ass01_FE.Infrastructure.Services.OfflineCategoryService _offlineCategoryService;
     private readonly CategoryApiService _categoryApiService;
     private readonly NewsApiService _newsApiService;
 
-    public CategoryController(CategoryApiService categoryApiService, NewsApiService newsApiService)
+    public CategoryController(ass01_FE.Infrastructure.Services.OfflineCategoryService offlineCategoryService, CategoryApiService categoryApiService, NewsApiService newsApiService)
     {
+        _offlineCategoryService = offlineCategoryService;
         _categoryApiService = categoryApiService;
         _newsApiService = newsApiService;
     }
@@ -34,9 +39,15 @@ public class CategoryController : Controller
         ViewBag.Skip = skip;
         ViewBag.Top = top;
 
-        var result = await _categoryApiService.GetCategoriesAsync(searchKeyword, skip, top);
+        var result = await _offlineCategoryService.GetCategoriesWithOfflineFallbackAsync(searchKeyword, skip, top);
         
-        return View(result);
+        ViewBag.IsOffline = result.IsOffline;
+        if (result.IsOffline)
+        {
+            ViewBag.ErrorMessage = result.ErrorMessage;
+        }
+
+        return View(result.Data);
     }
 
     [HttpGet]

@@ -5,8 +5,11 @@ using System;
 using ass01_FE.DataAccess.Services;
 using ass01_FE.Presentation.Models.Report;
 
+using ass01_FE.Infrastructure.Filters;
+
 namespace ass01_FE.Presentation.Controllers;
 
+[RoleAuthorize("Admin")]
 public class ReportController : Controller
 {
     private readonly ReportApiService _reportApiService;
