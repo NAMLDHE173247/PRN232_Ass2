@@ -35,3 +35,10 @@ Ensure that the 4 applications are started simultaneously. The frontend expects 
 - Excel Export
 - SignalR Notification System
 - Audit Logging
+
+## Test Accounts
+You can use the following accounts to test the application:
+
+- **Admin:** `admin@FUNewsManagementSystem.org` | Password: `@@abc123@@`
+- **Staff:** `staff1@funews.com` | Password: `1`
+- **Lecturer:** `lecturer1@funews.com` | Password: `1`
