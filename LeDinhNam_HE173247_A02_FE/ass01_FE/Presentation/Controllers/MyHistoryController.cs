@@ -19,10 +19,7 @@ public class MyHistoryController : Controller
         return HttpContext.Session.GetString("UserRole") == "Staff";
     }
 
-    private string GetToken()
-    {
-        return HttpContext.Session.GetString("AccessToken") ?? string.Empty;
-    }
+    
 
     public async Task<IActionResult> Index()
     {
@@ -31,9 +28,9 @@ public class MyHistoryController : Controller
             return RedirectToAction("Index", "Home");
         }
 
-        var token = GetToken();
-        var articles = await _newsApiService.GetMyHistoryAsync(token);
+        var articles = await _newsApiService.GetMyHistoryAsync();
         
         return View(articles);
     }
 }
+

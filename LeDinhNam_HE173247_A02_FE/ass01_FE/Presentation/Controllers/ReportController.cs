@@ -42,7 +42,7 @@ public class ReportController : Controller
             }
 
             var token = HttpContext.Session.GetString("AccessToken") ?? string.Empty;
-            var stats = await _reportApiService.GetReportAsync(token, startDate.Value, endDate.Value);
+            var stats = await _reportApiService.GetReportAsync(startDate.Value, endDate.Value);
             
             if (stats == null)
             {
@@ -63,3 +63,4 @@ public class ReportController : Controller
         return View(model);
     }
 }
+

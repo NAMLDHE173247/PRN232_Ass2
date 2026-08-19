@@ -19,10 +19,7 @@ public class ProfileController : Controller
         return HttpContext.Session.GetString("UserRole") == "Staff";
     }
 
-    private string GetToken()
-    {
-        return HttpContext.Session.GetString("AccessToken") ?? string.Empty;
-    }
+    
 
     public async Task<IActionResult> Index()
     {
@@ -31,8 +28,7 @@ public class ProfileController : Controller
             return RedirectToAction("Index", "Home");
         }
 
-        var token = GetToken();
-        var profile = await _profileApiService.GetMyProfileAsync(token);
+        var profile = await _profileApiService.GetMyProfileAsync();
         
         return View(profile);
     }
@@ -41,9 +37,8 @@ public class ProfileController : Controller
     public async Task<IActionResult> Update([FromBody] object model)
     {
         if (!IsStaff()) return Unauthorized("Staff access required.");
-        
-        var token = GetToken();
-        var response = await _profileApiService.UpdateMyProfileAsync(token, model);
+
+        var response = await _profileApiService.UpdateMyProfileAsync(model);
         
         if (response.IsSuccessStatusCode)
         {
@@ -60,9 +55,8 @@ public class ProfileController : Controller
     public async Task<IActionResult> ChangePassword(short id, [FromBody] object model)
     {
         if (!IsStaff()) return Unauthorized("Staff access required.");
-        
-        var token = GetToken();
-        var response = await _profileApiService.ChangePasswordAsync(token, id, model);
+
+        var response = await _profileApiService.ChangePasswordAsync(id, model);
         
         if (response.IsSuccessStatusCode)
         {
@@ -75,3 +69,4 @@ public class ProfileController : Controller
         }
     }
 }
+

@@ -31,15 +31,35 @@ public class AuthController : Controller
 
         var result = await _authApiService.LoginAsync(model);
 
-        if (result == null || string.IsNullOrEmpty(result.Token))
+        if (result == null)
         {
             ViewBag.Error = "Invalid email or password.";
             return View(model);
         }
 
-        HttpContext.Session.SetString("AccessToken", result.Token);
-        HttpContext.Session.SetString("UserRole", result.Role);
-        HttpContext.Session.SetString("AccountId", result.AccountId);
+        var tokenToUse = result.AccessToken ?? result.Token;
+        if (string.IsNullOrEmpty(tokenToUse))
+        {
+            ViewBag.Error = "Invalid email or password.";
+            return View(model);
+        }
+
+        HttpContext.Session.SetString("AccessToken", tokenToUse);
+        
+        if (!string.IsNullOrEmpty(result.RefreshToken))
+            HttpContext.Session.SetString("RefreshToken", result.RefreshToken);
+            
+        if (result.ExpiresAt.HasValue)
+            HttpContext.Session.SetString("ExpiresAt", result.ExpiresAt.Value.ToString("o")); // ISO-8601 UTC
+
+        if (!string.IsNullOrEmpty(result.Role))
+            HttpContext.Session.SetString("UserRole", result.Role);
+            
+        if (!string.IsNullOrEmpty(result.AccountId))
+            HttpContext.Session.SetString("AccountId", result.AccountId);
+
+        if (!string.IsNullOrEmpty(result.Email))
+            HttpContext.Session.SetString("Email", result.Email);
 
         return RedirectToAction("Index", "Home");
     }
@@ -51,3 +71,4 @@ public class AuthController : Controller
         return RedirectToAction("Index", "Home");
     }
 }
+

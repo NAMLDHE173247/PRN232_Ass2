@@ -13,18 +13,14 @@ namespace ass01_FE.DataAccess.Services
         public CategoryApiService(HttpClient httpClient, Microsoft.Extensions.Configuration.IConfiguration configuration)
         {
             _httpClient = httpClient;
-            var baseUrl = configuration["ApiSettings:BaseUrl"] ?? throw new System.InvalidOperationException("ApiSettings:BaseUrl is not configured.");
+            var baseUrl = configuration["ApiSettings:CoreApi"] ?? throw new System.InvalidOperationException("ApiSettings:BaseUrl is not configured.");
             _httpClient.BaseAddress = new System.Uri(baseUrl);
         }
 
-        private void AddAuthHeader(string token)
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        }
 
-        public async Task<CategoryListResult?> GetCategoriesAsync(string token, string? search = null, int? skip = null, int? top = null)
+
+        public async Task<CategoryListResult?> GetCategoriesAsync(string? search = null, int? skip = null, int? top = null)
         {
-            AddAuthHeader(token);
             var query = new List<string>();
             if (!string.IsNullOrEmpty(search)) query.Add($"search={search}");
             if (skip.HasValue) query.Add($"skip={skip}");
@@ -34,27 +30,23 @@ namespace ass01_FE.DataAccess.Services
             return await _httpClient.GetFromJsonAsync<CategoryListResult>($"/api/category{qs}");
         }
 
-        public async Task<object?> GetCategoryByIdAsync(string token, short id)
+        public async Task<object?> GetCategoryByIdAsync(short id)
         {
-            AddAuthHeader(token);
             return await _httpClient.GetFromJsonAsync<object>($"/api/category/{id}");
         }
 
-        public async Task<HttpResponseMessage> CreateCategoryAsync(string token, object payload)
+        public async Task<HttpResponseMessage> CreateCategoryAsync(object payload)
         {
-            AddAuthHeader(token);
             return await _httpClient.PostAsJsonAsync("/api/category", payload);
         }
 
-        public async Task<HttpResponseMessage> UpdateCategoryAsync(string token, short id, object payload)
+        public async Task<HttpResponseMessage> UpdateCategoryAsync(short id, object payload)
         {
-            AddAuthHeader(token);
             return await _httpClient.PutAsJsonAsync($"/api/category/{id}", payload);
         }
 
-        public async Task<HttpResponseMessage> DeleteCategoryAsync(string token, short id)
+        public async Task<HttpResponseMessage> DeleteCategoryAsync(short id)
         {
-            AddAuthHeader(token);
             return await _httpClient.DeleteAsync($"/api/category/{id}");
         }
     }

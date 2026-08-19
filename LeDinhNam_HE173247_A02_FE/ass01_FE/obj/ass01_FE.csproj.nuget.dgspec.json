@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\MSI\\Desktop\\PRN232\\PRN232_Block5\\ASS01\\ass01_FE\\ass01_FE\\ass01_FE.csproj": {}
+    "C:\\Users\\MSI\\Desktop\\PRN232\\PRN232_Block5\\ASS02\\LeDinhNam_HE173247_A02\\LeDinhNam_HE173247_A02_FE\\ass01_FE\\ass01_FE.csproj": {}
   },
   "projects": {
-    "C:\\Users\\MSI\\Desktop\\PRN232\\PRN232_Block5\\ASS01\\ass01_FE\\ass01_FE\\ass01_FE.csproj": {
+    "C:\\Users\\MSI\\Desktop\\PRN232\\PRN232_Block5\\ASS02\\LeDinhNam_HE173247_A02\\LeDinhNam_HE173247_A02_FE\\ass01_FE\\ass01_FE.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\MSI\\Desktop\\PRN232\\PRN232_Block5\\ASS01\\ass01_FE\\ass01_FE\\ass01_FE.csproj",
+        "projectUniqueName": "C:\\Users\\MSI\\Desktop\\PRN232\\PRN232_Block5\\ASS02\\LeDinhNam_HE173247_A02\\LeDinhNam_HE173247_A02_FE\\ass01_FE\\ass01_FE.csproj",
         "projectName": "ass01_FE",
-        "projectPath": "C:\\Users\\MSI\\Desktop\\PRN232\\PRN232_Block5\\ASS01\\ass01_FE\\ass01_FE\\ass01_FE.csproj",
+        "projectPath": "C:\\Users\\MSI\\Desktop\\PRN232\\PRN232_Block5\\ASS02\\LeDinhNam_HE173247_A02\\LeDinhNam_HE173247_A02_FE\\ass01_FE\\ass01_FE.csproj",
         "packagesPath": "C:\\Users\\MSI\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\MSI\\Desktop\\PRN232\\PRN232_Block5\\ASS01\\ass01_FE\\ass01_FE\\obj\\",
+        "outputPath": "C:\\Users\\MSI\\Desktop\\PRN232\\PRN232_Block5\\ASS02\\LeDinhNam_HE173247_A02\\LeDinhNam_HE173247_A02_FE\\ass01_FE\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -51,6 +51,12 @@
         "net8.0": {
           "framework": "net8.0",
           "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.Extensions.Http.Polly": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",

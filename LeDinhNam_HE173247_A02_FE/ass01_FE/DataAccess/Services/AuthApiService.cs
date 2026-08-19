@@ -13,7 +13,7 @@ public class AuthApiService
     public AuthApiService(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
-        var baseUrl = configuration["ApiSettings:BaseUrl"] ?? throw new System.InvalidOperationException("ApiSettings:BaseUrl is not configured.");
+        var baseUrl = configuration["ApiSettings:CoreApi"] ?? throw new System.InvalidOperationException("ApiSettings:BaseUrl is not configured.");
         _httpClient.BaseAddress = new System.Uri(baseUrl);
     }
 

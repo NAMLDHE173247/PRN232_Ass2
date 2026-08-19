@@ -20,10 +20,7 @@ public class AccountController : Controller
         return HttpContext.Session.GetString("UserRole") == "Admin";
     }
 
-    private string GetToken()
-    {
-        return HttpContext.Session.GetString("AccessToken") ?? string.Empty;
-    }
+    
 
     public async Task<IActionResult> Index(string? keyword, short? role)
     {
@@ -35,8 +32,7 @@ public class AccountController : Controller
         ViewBag.Keyword = keyword;
         ViewBag.Role = role;
 
-        var token = GetToken();
-        var accounts = await _accountApiService.GetAccountsAsync(token, keyword, role);
+        var accounts = await _accountApiService.GetAccountsAsync(keyword, role);
 
         return View(accounts);
     }
@@ -45,8 +41,8 @@ public class AccountController : Controller
     public async Task<IActionResult> GetList(string? keyword, short? role)
     {
         if (!IsAdmin()) return Unauthorized();
-        var token = GetToken();
-        var accounts = await _accountApiService.GetAccountsAsync(token, keyword, role);
+
+        var accounts = await _accountApiService.GetAccountsAsync(keyword, role);
         return Json(accounts);
     }
 
@@ -60,8 +56,7 @@ public class AccountController : Controller
             return BadRequest("Invalid input data.");
         }
 
-        var token = GetToken();
-        var (success, message) = await _accountApiService.CreateAccountAsync(token, model);
+        var (success, message) = await _accountApiService.CreateAccountAsync(model);
         
         if (success)
             return Ok(new { message });
@@ -79,8 +74,7 @@ public class AccountController : Controller
             return BadRequest("Invalid input data.");
         }
 
-        var token = GetToken();
-        var (success, message) = await _accountApiService.UpdateAccountAsync(token, model);
+        var (success, message) = await _accountApiService.UpdateAccountAsync(model);
         
         if (success)
             return Ok(new { message });
@@ -92,9 +86,8 @@ public class AccountController : Controller
     public async Task<IActionResult> Delete(short id)
     {
         if (!IsAdmin()) return Unauthorized("Admin access required.");
-        
-        var token = GetToken();
-        var (success, message) = await _accountApiService.DeleteAccountAsync(token, id);
+
+        var (success, message) = await _accountApiService.DeleteAccountAsync(id);
         
         if (success)
             return Ok(new { message });
@@ -102,3 +95,4 @@ public class AccountController : Controller
             return BadRequest(new { message });
     }
 }
+

@@ -13,30 +13,24 @@ namespace ass01_FE.DataAccess.Services
         public ProfileApiService(HttpClient httpClient, Microsoft.Extensions.Configuration.IConfiguration configuration)
         {
             _httpClient = httpClient;
-            var baseUrl = configuration["ApiSettings:BaseUrl"] ?? throw new System.InvalidOperationException("ApiSettings:BaseUrl is not configured.");
+            var baseUrl = configuration["ApiSettings:CoreApi"] ?? throw new System.InvalidOperationException("ApiSettings:BaseUrl is not configured.");
             _httpClient.BaseAddress = new System.Uri(baseUrl);
         }
 
-        private void AddAuthHeader(string token)
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        }
 
-        public async Task<AccountDto?> GetMyProfileAsync(string token)
+
+        public async Task<AccountDto?> GetMyProfileAsync()
         {
-            AddAuthHeader(token);
             return await _httpClient.GetFromJsonAsync<AccountDto>("/api/profile");
         }
 
-        public async Task<HttpResponseMessage> UpdateMyProfileAsync(string token, object payload)
+        public async Task<HttpResponseMessage> UpdateMyProfileAsync(object payload)
         {
-            AddAuthHeader(token);
             return await _httpClient.PutAsJsonAsync("/api/profile", payload);
         }
 
-        public async Task<HttpResponseMessage> ChangePasswordAsync(string token, short id, object payload)
+        public async Task<HttpResponseMessage> ChangePasswordAsync(short id, object payload)
         {
-            AddAuthHeader(token);
             return await _httpClient.PostAsJsonAsync($"/api/account/{id}/change-password", payload);
         }
     }

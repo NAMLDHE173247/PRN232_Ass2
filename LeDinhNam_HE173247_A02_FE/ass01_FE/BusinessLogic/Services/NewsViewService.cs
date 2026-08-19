@@ -18,12 +18,12 @@ public class NewsViewService
         _tagApiService = tagApiService;
     }
 
-    public async Task<(IEnumerable<object> Items, int Count, CategoryListResult? Categories, IEnumerable<object> Tags)> GetStaffNewsDataAsync(
-        string token, string? keyword, short? categoryId, string? tagName, DateTime? startDate, DateTime? endDate, string? authorName, bool? newsStatus, int skip, int top)
+    public async Task<(IEnumerable<object> Items, int Count, CategoryListResult? Categories, IEnumerable<object>? Tags)> GetStaffNewsDataAsync(
+        string? keyword, short? categoryId, string? tagName, DateTime? startDate, DateTime? endDate, string? authorName, bool? newsStatus, int skip, int top)
     {
-        var (items, count) = await _newsApiService.GetStaffNewsAsync(token, keyword, categoryId, tagName, startDate, endDate, authorName, newsStatus, skip, top);
-        var categories = await _categoryApiService.GetCategoriesAsync(token, null, 0, 100);
-        var tags = await _tagApiService.GetTagsAsync(token);
+        var (items, count) = await _newsApiService.GetStaffNewsAsync(keyword, categoryId, tagName, startDate, endDate, authorName, newsStatus, skip, top);
+        var categories = await _categoryApiService.GetCategoriesAsync(null, 0, 100);
+        var tags = await _tagApiService.GetTagsAsync();
 
         return (items, count, categories, tags);
     }

@@ -27,10 +27,7 @@ public class StaffNewsController : Controller
         return HttpContext.Session.GetString("UserRole") == "Staff";
     }
 
-    private string GetToken()
-    {
-        return HttpContext.Session.GetString("AccessToken") ?? string.Empty;
-    }
+    
 
     public async Task<IActionResult> Index(string? keyword, short? categoryId, string? tagName, DateTime? startDate, DateTime? endDate, string? authorName, bool? newsStatus, int skip = 0, int top = 10)
     {
@@ -49,8 +46,7 @@ public class StaffNewsController : Controller
         ViewBag.Skip = skip;
         ViewBag.Top = top;
 
-        var token = GetToken();
-        var data = await _newsViewService.GetStaffNewsDataAsync(token, keyword, categoryId, tagName, startDate, endDate, authorName, newsStatus, skip, top);
+        var data = await _newsViewService.GetStaffNewsDataAsync(keyword, categoryId, tagName, startDate, endDate, authorName, newsStatus, skip, top);
         
         ViewBag.TotalCount = data.Count;
         
@@ -65,8 +61,8 @@ public class StaffNewsController : Controller
     public async Task<IActionResult> GetList(string? keyword, short? categoryId, string? tagName, DateTime? startDate, DateTime? endDate, string? authorName, bool? newsStatus, int skip = 0, int top = 10)
     {
         if (!IsStaff()) return Unauthorized();
-        var token = GetToken();
-        var (items, count) = await _newsApiService.GetStaffNewsAsync(token, keyword, categoryId, tagName, startDate, endDate, authorName, newsStatus, skip, top);
+
+        var (items, count) = await _newsApiService.GetStaffNewsAsync(keyword, categoryId, tagName, startDate, endDate, authorName, newsStatus, skip, top);
         return Json(new { items, count });
     }
 
@@ -74,8 +70,8 @@ public class StaffNewsController : Controller
     public async Task<IActionResult> Create([FromBody] object model)
     {
         if (!IsStaff()) return Unauthorized("Staff access required.");
-        var token = GetToken();
-        var response = await _newsApiService.CreateNewsArticleAsync(token, model);
+
+        var response = await _newsApiService.CreateNewsArticleAsync(model);
         if (response.IsSuccessStatusCode)
             return Ok(new { message = "News created successfully." });
         var error = await response.Content.ReadAsStringAsync();
@@ -86,8 +82,8 @@ public class StaffNewsController : Controller
     public async Task<IActionResult> Update(string id, [FromBody] object model)
     {
         if (!IsStaff()) return Unauthorized("Staff access required.");
-        var token = GetToken();
-        var response = await _newsApiService.UpdateNewsArticleAsync(token, id, model);
+
+        var response = await _newsApiService.UpdateNewsArticleAsync(id, model);
         if (response.IsSuccessStatusCode)
             return Ok(new { message = "News updated successfully." });
         var error = await response.Content.ReadAsStringAsync();
@@ -98,8 +94,8 @@ public class StaffNewsController : Controller
     public async Task<IActionResult> Delete(string id)
     {
         if (!IsStaff()) return Unauthorized("Staff access required.");
-        var token = GetToken();
-        var response = await _newsApiService.DeleteNewsArticleAsync(token, id);
+
+        var response = await _newsApiService.DeleteNewsArticleAsync(id);
         if (response.IsSuccessStatusCode)
             return Ok(new { message = "News deleted successfully." });
         var error = await response.Content.ReadAsStringAsync();
@@ -110,11 +106,12 @@ public class StaffNewsController : Controller
     public async Task<IActionResult> Duplicate(string id)
     {
         if (!IsStaff()) return Unauthorized("Staff access required.");
-        var token = GetToken();
-        var response = await _newsApiService.DuplicateNewsArticleAsync(token, id);
+
+        var response = await _newsApiService.DuplicateNewsArticleAsync(id);
         if (response.IsSuccessStatusCode)
             return Ok(new { message = "News duplicated successfully." });
         var error = await response.Content.ReadAsStringAsync();
         return BadRequest(new { message = error });
     }
 }
+

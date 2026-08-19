@@ -13,15 +13,12 @@ public class NewsApiService
 {
     private readonly HttpClient _httpClient;
 
-    private void AddAuthHeader(string token)
-    {
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-    }
+
 
     public NewsApiService(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
-        var baseUrl = configuration["ApiSettings:BaseUrl"] ?? throw new System.InvalidOperationException("ApiSettings:BaseUrl is not configured.");
+        var baseUrl = configuration["ApiSettings:CoreApi"] ?? throw new System.InvalidOperationException("ApiSettings:BaseUrl is not configured.");
         _httpClient.BaseAddress = new System.Uri(baseUrl);
     }
 
@@ -84,9 +81,8 @@ public class NewsApiService
     // --- Staff Methods ---
 
     public async Task<(List<NewsArticleDto> Items, int TotalCount)> GetStaffNewsAsync(
-        string token, string? keyword = null, short? categoryId = null, string? tagName = null, DateTime? startDate = null, DateTime? endDate = null, string? authorName = null, bool? newsStatus = null, int skip = 0, int top = 10)
+        string? keyword = null, short? categoryId = null, string? tagName = null, DateTime? startDate = null, DateTime? endDate = null, string? authorName = null, bool? newsStatus = null, int skip = 0, int top = 10)
     {
-        AddAuthHeader(token);
         
         var query = new List<string> { $"$skip={skip}", $"$top={top}", "$count=true", "$orderby=CreatedDate desc" };
         if (!string.IsNullOrEmpty(keyword)) query.Add($"keyword={System.Uri.EscapeDataString(keyword)}");
@@ -125,9 +121,8 @@ public class NewsApiService
         return (new List<NewsArticleDto>(), 0);
     }
 
-    public async Task<List<NewsArticleDto>> GetMyHistoryAsync(string token)
+    public async Task<List<NewsArticleDto>> GetMyHistoryAsync()
     {
-        AddAuthHeader(token);
         var response = await _httpClient.GetAsync("api/news/my-history");
         if (response.IsSuccessStatusCode)
         {
@@ -137,27 +132,23 @@ public class NewsApiService
         return new List<NewsArticleDto>();
     }
 
-    public async Task<HttpResponseMessage> CreateNewsArticleAsync(string token, object payload)
+    public async Task<HttpResponseMessage> CreateNewsArticleAsync(object payload)
     {
-        AddAuthHeader(token);
         return await _httpClient.PostAsJsonAsync("api/news", payload);
     }
 
-    public async Task<HttpResponseMessage> UpdateNewsArticleAsync(string token, string id, object payload)
+    public async Task<HttpResponseMessage> UpdateNewsArticleAsync(string id, object payload)
     {
-        AddAuthHeader(token);
         return await _httpClient.PutAsJsonAsync($"api/news/{id}", payload);
     }
 
-    public async Task<HttpResponseMessage> DeleteNewsArticleAsync(string token, string id)
+    public async Task<HttpResponseMessage> DeleteNewsArticleAsync(string id)
     {
-        AddAuthHeader(token);
         return await _httpClient.DeleteAsync($"api/news/{id}");
     }
 
-    public async Task<HttpResponseMessage> DuplicateNewsArticleAsync(string token, string id)
+    public async Task<HttpResponseMessage> DuplicateNewsArticleAsync(string id)
     {
-        AddAuthHeader(token);
         return await _httpClient.PostAsync($"api/news/{id}/duplicate", null);
     }
 }

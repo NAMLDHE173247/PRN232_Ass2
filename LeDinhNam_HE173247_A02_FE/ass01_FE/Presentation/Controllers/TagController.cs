@@ -19,10 +19,7 @@ public class TagController : Controller
         return HttpContext.Session.GetString("UserRole") == "Staff";
     }
 
-    private string GetToken()
-    {
-        return HttpContext.Session.GetString("AccessToken") ?? string.Empty;
-    }
+    
 
     public async Task<IActionResult> Index()
     {
@@ -31,8 +28,7 @@ public class TagController : Controller
             return RedirectToAction("Index", "Home");
         }
 
-        var token = GetToken();
-        var tags = await _tagApiService.GetTagsAsync(token);
+        var tags = await _tagApiService.GetTagsAsync();
         
         return View(tags);
     }
@@ -41,8 +37,8 @@ public class TagController : Controller
     public async Task<IActionResult> GetList()
     {
         if (!IsStaff()) return Unauthorized();
-        var token = GetToken();
-        var tags = await _tagApiService.GetTagsAsync(token);
+
+        var tags = await _tagApiService.GetTagsAsync();
         return Json(tags);
     }
 
@@ -50,9 +46,8 @@ public class TagController : Controller
     public async Task<IActionResult> Create([FromBody] object model)
     {
         if (!IsStaff()) return Unauthorized("Staff access required.");
-        
-        var token = GetToken();
-        var response = await _tagApiService.CreateTagAsync(token, model);
+
+        var response = await _tagApiService.CreateTagAsync(model);
         
         if (response.IsSuccessStatusCode)
             return Ok(new { message = "Tag created successfully." });
@@ -67,9 +62,8 @@ public class TagController : Controller
     public async Task<IActionResult> Update(int id, [FromBody] object model)
     {
         if (!IsStaff()) return Unauthorized("Staff access required.");
-        
-        var token = GetToken();
-        var response = await _tagApiService.UpdateTagAsync(token, id, model);
+
+        var response = await _tagApiService.UpdateTagAsync(id, model);
         
         if (response.IsSuccessStatusCode)
             return Ok(new { message = "Tag updated successfully." });
@@ -84,9 +78,8 @@ public class TagController : Controller
     public async Task<IActionResult> Delete(int id)
     {
         if (!IsStaff()) return Unauthorized("Staff access required.");
-        
-        var token = GetToken();
-        var response = await _tagApiService.DeleteTagAsync(token, id);
+
+        var response = await _tagApiService.DeleteTagAsync(id);
         
         if (response.IsSuccessStatusCode)
             return Ok(new { message = "Tag deleted successfully." });
@@ -100,8 +93,8 @@ public class TagController : Controller
     [HttpGet]
     public async Task<IActionResult> GetNewsForTag(int id)
     {
-        var token = GetToken(); // Wait, token isn't strictly required if it's AllowAnonymous in Backend, but we can pass it
-        var news = await _tagApiService.GetNewsForTagAsync(token, id);
+        var news = await _tagApiService.GetNewsForTagAsync(id);
         return Json(news);
     }
 }
+

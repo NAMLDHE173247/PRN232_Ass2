@@ -16,21 +16,14 @@ public class AccountApiService
     public AccountApiService(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
-        var baseUrl = configuration["ApiSettings:BaseUrl"] ?? throw new System.InvalidOperationException("ApiSettings:BaseUrl is not configured.");
+        var baseUrl = configuration["ApiSettings:CoreApi"] ?? throw new System.InvalidOperationException("ApiSettings:BaseUrl is not configured.");
         _httpClient.BaseAddress = new System.Uri(baseUrl);
     }
 
-    private void AttachBearerToken(string token)
-    {
-        if (!string.IsNullOrEmpty(token))
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        }
-    }
 
-    public async Task<List<AccountDto>> GetAccountsAsync(string token, string? keyword = null, short? role = null)
+
+    public async Task<List<AccountDto>> GetAccountsAsync(string? keyword = null, short? role = null)
     {
-        AttachBearerToken(token);
         
         var url = "api/account?";
         if (!string.IsNullOrEmpty(keyword)) url += $"searchKeyword={System.Uri.EscapeDataString(keyword)}&";
@@ -60,9 +53,8 @@ public class AccountApiService
         return new List<AccountDto>();
     }
 
-    public async Task<(bool Success, string Message)> CreateAccountAsync(string token, CreateAccountViewModel model)
+    public async Task<(bool Success, string Message)> CreateAccountAsync(CreateAccountViewModel model)
     {
-        AttachBearerToken(token);
         var response = await _httpClient.PostAsJsonAsync("api/account", model);
         if (response.IsSuccessStatusCode)
         {
@@ -72,9 +64,8 @@ public class AccountApiService
         return (false, string.IsNullOrEmpty(errorMsg) ? "Failed to create account." : errorMsg);
     }
 
-    public async Task<(bool Success, string Message)> UpdateAccountAsync(string token, UpdateAccountViewModel model)
+    public async Task<(bool Success, string Message)> UpdateAccountAsync(UpdateAccountViewModel model)
     {
-        AttachBearerToken(token);
         var response = await _httpClient.PutAsJsonAsync($"api/account/{model.AccountId}", model);
         if (response.IsSuccessStatusCode)
         {
@@ -84,9 +75,8 @@ public class AccountApiService
         return (false, string.IsNullOrEmpty(errorMsg) ? "Failed to update account." : errorMsg);
     }
 
-    public async Task<(bool Success, string Message)> DeleteAccountAsync(string token, short id)
+    public async Task<(bool Success, string Message)> DeleteAccountAsync(short id)
     {
-        AttachBearerToken(token);
         var response = await _httpClient.DeleteAsync($"api/account/{id}");
         if (response.IsSuccessStatusCode)
         {

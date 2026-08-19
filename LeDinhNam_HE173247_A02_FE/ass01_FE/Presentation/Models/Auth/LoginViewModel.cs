@@ -14,7 +14,11 @@ public class LoginViewModel
 
 public class LoginResponse
 {
-    public string Token { get; set; } = string.Empty;
-    public string Role { get; set; } = string.Empty;
-    public string AccountId { get; set; } = string.Empty;
+    public string? Token { get; set; } // Backward compatibility
+    public string? AccessToken { get; set; }
+    public string? RefreshToken { get; set; }
+    public DateTimeOffset? ExpiresAt { get; set; }
+    public string? Role { get; set; }
+    public string? AccountId { get; set; }
+    public string? Email { get; set; }
 }

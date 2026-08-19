@@ -21,10 +21,7 @@ public class CategoryController : Controller
         return HttpContext.Session.GetString("UserRole") == "Staff";
     }
 
-    private string GetToken()
-    {
-        return HttpContext.Session.GetString("AccessToken") ?? string.Empty;
-    }
+    
 
     public async Task<IActionResult> Index(string? searchKeyword, int skip = 0, int top = 10)
     {
@@ -37,8 +34,7 @@ public class CategoryController : Controller
         ViewBag.Skip = skip;
         ViewBag.Top = top;
 
-        var token = GetToken();
-        var result = await _categoryApiService.GetCategoriesAsync(token, searchKeyword, skip, top);
+        var result = await _categoryApiService.GetCategoriesAsync(searchKeyword, skip, top);
         
         return View(result);
     }
@@ -47,8 +43,8 @@ public class CategoryController : Controller
     public async Task<IActionResult> GetList(string? searchKeyword, int skip = 0, int top = 10)
     {
         if (!IsStaff()) return Unauthorized();
-        var token = GetToken();
-        var result = await _categoryApiService.GetCategoriesAsync(token, searchKeyword, skip, top);
+
+        var result = await _categoryApiService.GetCategoriesAsync(searchKeyword, skip, top);
         return Json(result);
     }
 
@@ -56,9 +52,8 @@ public class CategoryController : Controller
     public async Task<IActionResult> Create([FromBody] object model)
     {
         if (!IsStaff()) return Unauthorized("Staff access required.");
-        
-        var token = GetToken();
-        var response = await _categoryApiService.CreateCategoryAsync(token, model);
+
+        var response = await _categoryApiService.CreateCategoryAsync(model);
         
         if (response.IsSuccessStatusCode)
             return Ok(new { message = "Category created successfully." });
@@ -73,9 +68,8 @@ public class CategoryController : Controller
     public async Task<IActionResult> Update(short id, [FromBody] object model)
     {
         if (!IsStaff()) return Unauthorized("Staff access required.");
-        
-        var token = GetToken();
-        var response = await _categoryApiService.UpdateCategoryAsync(token, id, model);
+
+        var response = await _categoryApiService.UpdateCategoryAsync(id, model);
         
         if (response.IsSuccessStatusCode)
             return Ok(new { message = "Category updated successfully." });
@@ -90,9 +84,8 @@ public class CategoryController : Controller
     public async Task<IActionResult> Delete(short id)
     {
         if (!IsStaff()) return Unauthorized("Staff access required.");
-        
-        var token = GetToken();
-        var response = await _categoryApiService.DeleteCategoryAsync(token, id);
+
+        var response = await _categoryApiService.DeleteCategoryAsync(id);
         
         if (response.IsSuccessStatusCode)
             return Ok(new { message = "Category deleted successfully." });
@@ -107,8 +100,9 @@ public class CategoryController : Controller
     public async Task<IActionResult> GetNewsForCategory(int id)
     {
         if (!IsStaff()) return Unauthorized();
-        var token = GetToken();
-        var (items, count) = await _newsApiService.GetStaffNewsAsync(token, categoryId: (short)id, top: 100);
+
+        var (items, count) = await _newsApiService.GetStaffNewsAsync(categoryId: (short)id, top: 100);
         return Json(items);
     }
 }
+
