@@ -1,0 +1,34 @@
+[
+  {
+    "ContainingType": "FUNewsManagement_AIAPI.Controllers.AiController",
+    "Method": "LearnTag",
+    "RelativePath": "api/Ai/learn",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "FUNewsManagement_AIAPI.DTOs.LearnTagRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FUNewsManagement_AIAPI.Controllers.AiController",
+    "Method": "SuggestTags",
+    "RelativePath": "api/Ai/suggest-tags",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "FUNewsManagement_AIAPI.DTOs.SuggestTagsRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]

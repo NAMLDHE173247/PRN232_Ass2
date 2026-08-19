@@ -1,0 +1,23 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "LeDinhNam_HE173247_A01_BE\\ass01\\ass01.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "LeDinhNam_HE173247_A02_FE\\ass01_FE\\ass01_FE.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "FUNewsManagement_AnalyticsAPI\\FUNewsManagement_AnalyticsAPI.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "FUNewsManagement_AIAPI\\FUNewsManagement_AIAPI.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

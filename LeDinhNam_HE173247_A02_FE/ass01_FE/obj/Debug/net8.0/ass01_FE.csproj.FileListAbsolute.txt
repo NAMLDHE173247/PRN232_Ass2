@@ -120,3 +120,4 @@ C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam
 C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Microsoft.Extensions.Options.ConfigurationExtensions.dll
 C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\Microsoft.Extensions.Primitives.dll
 C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\bin\Debug\net8.0\System.Diagnostics.DiagnosticSource.dll
+C:\Users\MSI\Desktop\PRN232\PRN232_Block5\ASS02\LeDinhNam_HE173247_A02\LeDinhNam_HE173247_A02_FE\ass01_FE\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

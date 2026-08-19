@@ -47,6 +47,7 @@ namespace FUNewsManagement_AnalyticsAPI.Controllers
                     Article = a,
                     Score = (a.CategoryId == sourceArticle.CategoryId ? 2 : 0) + a.Tags.Count(t => sourceTagIds.Contains(t.TagId))
                 })
+                .Where(x => x.Score > 0)
                 .OrderByDescending(x => x.Score)
                 .ThenByDescending(x => x.Article.CreatedDate)
                 .Take(3)
