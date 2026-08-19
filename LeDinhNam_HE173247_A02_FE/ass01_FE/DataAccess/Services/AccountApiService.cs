@@ -85,4 +85,15 @@ public class AccountApiService
         var errorMsg = await response.Content.ReadAsStringAsync();
         return (false, string.IsNullOrEmpty(errorMsg) ? "Failed to delete account." : errorMsg);
     }
+
+    public async Task<(bool Success, string Message)> ChangePasswordAsync(short id, ChangePasswordViewModel model)
+    {
+        var response = await _httpClient.PostAsJsonAsync($"api/account/{id}/change-password", model);
+        if (response.IsSuccessStatusCode)
+        {
+            return (true, "Password changed successfully.");
+        }
+        var errorMsg = await response.Content.ReadAsStringAsync();
+        return (false, string.IsNullOrEmpty(errorMsg) ? "Failed to change password." : errorMsg);
+    }
 }

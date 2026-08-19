@@ -195,7 +195,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Category</label>
-                            <select class="form-select" id="c_category">
+                            <select class="form-select" id="c_category" required>
                                 <option value="">None</option>
                                 @if (categories?.Value != null)
                                 {
@@ -205,10 +205,11 @@
                                     }
                                 }
                             </select>
+                            <div class="invalid-feedback">Category is required.</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Tags (Ctrl+Click for multiple)</label>
-                            <select class="form-select" id="c_tags" multiple size="4">
+                            <select class="form-select" id="c_tags" multiple size="4" required>
                                 @if (tags != null)
                                 {
                                     foreach (var t in tags)
@@ -217,6 +218,7 @@
                                     }
                                 }
                             </select>
+                            <div class="invalid-feedback">At least one tag is required.</div>
                         </div>
                         <div class="col-md-12 mb-3 form-check ms-3">
                             <input type="checkbox" class="form-check-input" id="c_status" checked />
@@ -270,7 +272,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Category</label>
-                            <select class="form-select" id="e_category">
+                            <select class="form-select" id="e_category" required>
                                 <option value="">None</option>
                                 @if (categories?.Value != null)
                                 {
@@ -280,10 +282,11 @@
                                     }
                                 }
                             </select>
+                            <div class="invalid-feedback">Category is required.</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Tags (Ctrl+Click for multiple)</label>
-                            <select class="form-select" id="e_tags" multiple size="4">
+                            <select class="form-select" id="e_tags" multiple size="4" required>
                                 @if (tags != null)
                                 {
                                     foreach (var t in tags)
@@ -292,6 +295,7 @@
                                     }
                                 }
                             </select>
+                            <div class="invalid-feedback">At least one tag is required.</div>
                         </div>
                         <div class="col-md-12 mb-3 form-check ms-3">
                             <input type="checkbox" class="form-check-input" id="e_status" />
@@ -478,7 +482,7 @@
                         await loadTable();
                         
                         for (const tagName of selectedAiTags) {
-                            await recordSelectedSuggestedTagsAsync(content.substring(0, 50), tagName);
+                            await recordSelectedSuggestedTagsAsync(content, tagName);
                         }
                     } else {
                         showAlert(res.message || 'Failed to create', 'danger');
@@ -542,7 +546,7 @@
                         await loadTable();
 
                         for (const tagName of selectedAiTags) {
-                            await recordSelectedSuggestedTagsAsync(content.substring(0, 50), tagName);
+                            await recordSelectedSuggestedTagsAsync(content, tagName);
                         }
                     } else {
                         showAlert(res.message || 'Failed to update', 'danger');

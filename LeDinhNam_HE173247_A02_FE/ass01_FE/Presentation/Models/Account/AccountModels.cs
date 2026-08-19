@@ -43,3 +43,13 @@ public class UpdateAccountViewModel
     [Required]
     public short AccountRole { get; set; }
 }
+
+public class ChangePasswordViewModel
+{
+    [Required]
+    public string CurrentPassword { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(70, MinimumLength = 6)]
+    public string NewPassword { get; set; } = string.Empty;
+}

@@ -31,6 +31,7 @@ public class NewsApiService
         }
 
         var response = await _httpClient.GetAsync(url);
+        ass01_FE.Infrastructure.Helpers.OfflineHelper.ThrowIfOffline(response);
         if (response.IsSuccessStatusCode)
         {
             var contentString = await response.Content.ReadAsStringAsync();
@@ -95,6 +96,7 @@ public class NewsApiService
 
         var url = "api/news?" + string.Join("&", query);
         var response = await _httpClient.GetAsync(url);
+        ass01_FE.Infrastructure.Helpers.OfflineHelper.ThrowIfOffline(response);
         
         if (response.IsSuccessStatusCode)
         {

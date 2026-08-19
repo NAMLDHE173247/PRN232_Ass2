@@ -137,50 +137,53 @@ public class TagSuggestionService : ITagSuggestionService
             return false;
         }
 
-        var normalizedKeyword = Normalize(request.Keyword);
+        var normalizedContent = Normalize(request.Keyword);
         var normalizedTag = request.TagName.Trim();
 
-        if (string.IsNullOrWhiteSpace(normalizedKeyword)) return false;
+        if (string.IsNullOrWhiteSpace(normalizedContent)) return false;
 
         // 1. Validate Tag exists in DB
-        var tagExists = await _context.Tags.AnyAsync(t => t.TagName.ToLower() == normalizedTag.ToLower());
-        if (!tagExists)
+        var actualTag = await _context.Tags.FirstOrDefaultAsync(t => t.TagName.ToLower() == normalizedTag.ToLower());
+        if (actualTag == null)
         {
             return false; // Reject nonexistent tag
         }
+        normalizedTag = actualTag.TagName;
 
-        // Fetch actual casing from DB
-        var actualTag = await _context.Tags.FirstOrDefaultAsync(t => t.TagName.ToLower() == normalizedTag.ToLower());
-        if (actualTag != null)
-        {
-            normalizedTag = actualTag.TagName;
-        }
+        // 2. Tokenize content to find distinct meaningful keywords
+        var tokens = normalizedContent.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                      .Where(t => !StopWords.Contains(t))
+                                      .Distinct()
+                                      .ToList();
 
-        // 2. Update or Insert Learning Cache
-        var existingCache = await _context.TagLearningCaches
-            .FirstOrDefaultAsync(c => c.Keyword.ToLower() == normalizedKeyword && c.TagName.ToLower() == normalizedTag.ToLower());
+        // 3. Upsert each token into Learning Cache
+        foreach (var token in tokens)
+        {
+            var existingCache = await _context.TagLearningCaches
+                .FirstOrDefaultAsync(c => c.Keyword.ToLower() == token && c.TagName == normalizedTag);
 
-        if (existingCache != null)
-        {
-            await _context.TagLearningCaches
-                .Where(c => c.Id == existingCache.Id)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(b => b.SelectedCount, b => b.SelectedCount + 1)
-                    .SetProperty(b => b.LastUpdated, DateTime.Now));
-        }
-        else
-        {
-            var newCache = new TagLearningCache
+            if (existingCache != null)
             {
-                Keyword = normalizedKeyword,
-                TagName = normalizedTag,
-                SelectedCount = 1,
-                LastUpdated = DateTime.Now
-            };
-            _context.TagLearningCaches.Add(newCache);
-            await _context.SaveChangesAsync();
+                await _context.TagLearningCaches
+                    .Where(c => c.Id == existingCache.Id)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(b => b.SelectedCount, b => b.SelectedCount + 1)
+                        .SetProperty(b => b.LastUpdated, DateTime.Now));
+            }
+            else
+            {
+                var newCache = new TagLearningCache
+                {
+                    Keyword = token,
+                    TagName = normalizedTag,
+                    SelectedCount = 1,
+                    LastUpdated = DateTime.Now
+                };
+                _context.TagLearningCaches.Add(newCache);
+            }
         }
-
+        
+        await _context.SaveChangesAsync();
         return true;
     }
 }

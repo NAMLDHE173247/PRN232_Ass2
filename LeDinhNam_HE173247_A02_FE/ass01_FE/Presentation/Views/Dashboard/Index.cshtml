@@ -41,8 +41,8 @@
                     <label asp-for="CurrentFilter.Status" class="form-label">Status</label>
                     <select asp-for="CurrentFilter.Status" class="form-select">
                         <option value="">All Statuses</option>
-                        <option value="1">Active</option>
-                        <option value="0">Inactive</option>
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -181,7 +181,7 @@
             }
 
             new Chart(ctx, {
-                type: 'doughnut',
+                type: 'pie',
                 data: {
                     labels: labels,
                     datasets: [{

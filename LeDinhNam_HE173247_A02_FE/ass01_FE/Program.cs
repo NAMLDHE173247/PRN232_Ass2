@@ -38,6 +38,7 @@ builder.Services.AddScoped<ass01_FE.Infrastructure.Services.OfflineNewsService>(
 builder.Services.AddScoped<ass01_FE.Infrastructure.Services.OfflineCategoryService>();
 builder.Services.AddScoped<ass01_FE.Infrastructure.Services.OfflineTagService>();
 builder.Services.AddScoped<ass01_FE.Infrastructure.Services.OfflineDashboardService>();
+builder.Services.AddSingleton<ass01_FE.Infrastructure.Services.WorkerTokenService>();
 builder.Services.AddHostedService<ass01_FE.Infrastructure.Workers.CacheRefreshWorker>();
 
 // Polly Policy (Idempotent only: GET/HEAD)

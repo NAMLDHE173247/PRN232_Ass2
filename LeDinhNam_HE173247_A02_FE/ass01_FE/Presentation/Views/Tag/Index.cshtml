@@ -10,6 +10,12 @@
     </button>
 </div>
 
+<div class="row mb-3">
+    <div class="col-md-4">
+        <input type="text" id="searchInput" class="form-control" placeholder="Search tags by name or note..." onkeyup="filterTags()">
+    </div>
+</div>
+
 <div id="alertContainer"></div>
 
 <div class="table-responsive">
@@ -145,6 +151,21 @@
             showAppToast("Notification", msg, type);
         }
 
+        function filterTags() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('table tbody tr');
+            rows.forEach(row => {
+                if (row.cells.length < 4) return; // Skip empty message row
+                const name = row.cells[1].innerText.toLowerCase();
+                const note = row.cells[2].innerText.toLowerCase();
+                if (name.includes(input) || note.includes(input)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
         async function loadTable() {
             try {
                 const res = await fetch(`/Tag/GetList`);
@@ -173,6 +194,7 @@
                             </td>
                         </tr>`;
                     });
+                    filterTags(); // Re-apply filter after reload
                 }
             } catch(e) {
                 console.error("Failed to reload table", e);

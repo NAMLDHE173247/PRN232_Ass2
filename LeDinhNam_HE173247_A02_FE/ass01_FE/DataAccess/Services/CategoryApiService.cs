@@ -27,7 +27,13 @@ namespace ass01_FE.DataAccess.Services
             if (top.HasValue) query.Add($"top={top}");
 
             var qs = query.Count > 0 ? "?" + string.Join("&", query) : "";
-            return await _httpClient.GetFromJsonAsync<CategoryListResult>($"/api/category{qs}");
+            var response = await _httpClient.GetAsync($"/api/category{qs}");
+            ass01_FE.Infrastructure.Helpers.OfflineHelper.ThrowIfOffline(response);
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<CategoryListResult>();
+            }
+            return null;
         }
 
         public async Task<object?> GetCategoryByIdAsync(short id)

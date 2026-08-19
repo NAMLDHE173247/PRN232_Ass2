@@ -44,10 +44,36 @@ public class CacheRefreshWorker : BackgroundService
     private async Task RefreshCacheAsync(CancellationToken stoppingToken)
     {
         using var scope = _serviceProvider.CreateScope();
+        
+        var config = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+        var authApiService = scope.ServiceProvider.GetRequiredService<ass01_FE.DataAccess.Services.AuthApiService>();
+        var workerTokenService = scope.ServiceProvider.GetRequiredService<ass01_FE.Infrastructure.Services.WorkerTokenService>();
+        
+        // 0. Authenticate Worker
+        var email = config["AdminAccount:Email"];
+        var password = config["AdminAccount:Password"];
+        if (!string.IsNullOrEmpty(email) && !string.IsNullOrEmpty(password))
+        {
+            try
+            {
+                var loginResponse = await authApiService.LoginAsync(new ass01_FE.Presentation.Models.Auth.LoginViewModel { Email = email, Password = password });
+                if (loginResponse != null && !string.IsNullOrEmpty(loginResponse.Token))
+                {
+                    workerTokenService.AccessToken = loginResponse.Token;
+                    _logger.LogInformation("Worker successfully authenticated.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Worker failed to authenticate. API calls might fail if they require auth.");
+            }
+        }
+
         var cacheService = scope.ServiceProvider.GetRequiredService<IOfflineCacheService>();
         var newsApiService = scope.ServiceProvider.GetRequiredService<NewsApiService>();
         var categoryApiService = scope.ServiceProvider.GetRequiredService<CategoryApiService>();
         var tagApiService = scope.ServiceProvider.GetRequiredService<TagApiService>();
+        var analyticsApiClient = scope.ServiceProvider.GetRequiredService<ass01_FE.Infrastructure.Clients.AnalyticsApiClient>();
 
         // 1. Refresh Active News
         try
@@ -92,6 +118,30 @@ public class CacheRefreshWorker : BackgroundService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to refresh tags cache in worker.");
+        }
+
+        // 4. Refresh Dashboard
+        try
+        {
+            // Dashboard data from Analytics API
+            var dashboardData = await analyticsApiClient.GetDashboardStatisticsAsync(new ass01_FE.Presentation.Models.Dashboard.DashboardFilterViewModel());
+            
+            // Map DashboardStatisticsDto to DashboardViewModel for Offline cache
+            var viewModel = new ass01_FE.Presentation.Models.Dashboard.DashboardViewModel
+            {
+                Statistics = dashboardData,
+                TrendingArticles = await analyticsApiClient.GetTrendingArticlesAsync(new ass01_FE.Presentation.Models.Dashboard.DashboardFilterViewModel())
+            };
+            
+            if (viewModel != null)
+            {
+                await cacheService.SaveDashboardStatisticsAsync(viewModel);
+                _logger.LogInformation("Successfully refreshed dashboard cache.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to refresh dashboard cache in worker.");
         }
     }
 }

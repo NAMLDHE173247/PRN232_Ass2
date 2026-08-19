@@ -54,28 +54,67 @@ namespace FUNewsManagement_AnalyticsAPI.Controllers
                 return BadRequest("StartDate cannot be greater than EndDate");
             }
 
-            var newsQuery = _context.NewsArticles.AsQueryable();
+            var newsQuery = _context.NewsArticles
+                .Include(n => n.Category)
+                .Include(n => n.CreatedBy)
+                .AsQueryable();
             newsQuery = ApplyFilter(newsQuery, filter);
 
-            var totalNews = await newsQuery.CountAsync();
-            var totalViews = await newsQuery.SumAsync(n => (int?)n.ViewCount) ?? 0;
-            var totalAccounts = await _context.SystemAccounts.CountAsync();
-            var totalCategories = await _context.Categories.CountAsync();
+            var totalArticles = await newsQuery.CountAsync();
+            var activeArticles = await newsQuery.CountAsync(n => n.NewsStatus == true);
+            var inactiveArticles = await newsQuery.CountAsync(n => n.NewsStatus != true);
+
+            var articlesByCategory = await newsQuery
+                .Where(n => n.Category != null)
+                .GroupBy(n => n.Category!.CategoryName)
+                .Select(g => new
+                {
+                    CategoryName = g.Key,
+                    Count = g.Count()
+                })
+                .ToListAsync();
+
+            var articlesByStatus = await newsQuery
+                .GroupBy(n => n.NewsStatus)
+                .Select(g => new
+                {
+                    Status = g.Key == true ? "Active" : "Inactive",
+                    Count = g.Count()
+                })
+                .ToListAsync();
+
+            var articlesByAuthor = await newsQuery
+                .Where(n => n.CreatedBy != null)
+                .GroupBy(n => n.CreatedBy!.AccountName)
+                .Select(g => new
+                {
+                    AuthorName = g.Key,
+                    Count = g.Count()
+                })
+                .ToListAsync();
 
             return Ok(new
             {
-                TotalNews = totalNews,
-                TotalViews = totalViews,
-                TotalAccounts = totalAccounts,
-                TotalCategories = totalCategories
+                TotalArticles = totalArticles,
+                ActiveArticles = activeArticles,
+                InactiveArticles = inactiveArticles,
+                ArticlesByCategory = articlesByCategory,
+                ArticlesByStatus = articlesByStatus,
+                ArticlesByAuthor = articlesByAuthor
             });
         }
 
         [HttpGet("trending")]
-        public async Task<IActionResult> GetTrending()
+        public async Task<IActionResult> GetTrending([FromQuery] AnalyticsFilterDto filter)
         {
-            var trendingNews = await _context.NewsArticles
+            var newsQuery = _context.NewsArticles
+                .Include(n => n.Category)
                 .Where(n => n.NewsStatus == true)
+                .AsQueryable();
+
+            newsQuery = ApplyFilter(newsQuery, filter);
+
+            var trendingNews = await newsQuery
                 .OrderByDescending(n => n.ViewCount)
                 .ThenByDescending(n => n.CreatedDate)
                 .Take(5)

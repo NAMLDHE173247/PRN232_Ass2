@@ -96,5 +96,23 @@ public class AccountController : Controller
         else
             return BadRequest(new { message });
     }
+
+    [HttpPost]
+    public async Task<IActionResult> ChangePassword(short id, [FromBody] ChangePasswordViewModel model)
+    {
+        if (!IsAdmin()) return Unauthorized("Admin access required.");
+        
+        if (!ModelState.IsValid)
+        {
+            return BadRequest("Invalid input data.");
+        }
+
+        var (success, message) = await _accountApiService.ChangePasswordAsync(id, model);
+        
+        if (success)
+            return Ok(new { message });
+        else
+            return BadRequest(new { message });
+    }
 }
 

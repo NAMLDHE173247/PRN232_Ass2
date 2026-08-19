@@ -1,0 +1,98 @@
+-- ============================================================
+-- FUNewsManagement ASS02 – Database Update Script
+-- Run AFTER Database.sql (the original ASS1 script)
+-- ============================================================
+
+-- 1. Seed Admin account into SystemAccount (AccountRole = 0)
+--    Only insert if not already exists
+IF NOT EXISTS (SELECT 1 FROM [SystemAccount] WHERE [AccountEmail] = 'admin@FUNewsManagementSystem.org')
+BEGIN
+    INSERT INTO [SystemAccount] ([AccountID], [AccountName], [AccountEmail], [AccountRole], [AccountPassword])
+    VALUES (9999, 'System Admin', 'admin@FUNewsManagementSystem.org', 0, '@@abc123@@');
+    PRINT 'Admin account seeded.';
+END
+ELSE
+BEGIN
+    -- Ensure existing admin has AccountRole = 0
+    UPDATE [SystemAccount]
+    SET [AccountRole] = 0
+    WHERE [AccountEmail] = 'admin@FUNewsManagementSystem.org' AND [AccountRole] != 0;
+    PRINT 'Admin account already exists – skipped insert.';
+END
+GO
+
+-- 2. Add ViewCount and ImageUrl to NewsArticle (if not already added)
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('NewsArticle') AND name = 'ViewCount')
+BEGIN
+    ALTER TABLE [NewsArticle] ADD [ViewCount] INT NOT NULL DEFAULT 0;
+    PRINT 'Added ViewCount to NewsArticle.';
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('NewsArticle') AND name = 'ImageUrl')
+BEGIN
+    ALTER TABLE [NewsArticle] ADD [ImageUrl] NVARCHAR(500) NULL;
+    PRINT 'Added ImageUrl to NewsArticle.';
+END
+GO
+
+-- 3. Create RefreshToken table
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'RefreshToken')
+BEGIN
+    CREATE TABLE [RefreshToken] (
+        [Id]         INT           NOT NULL IDENTITY(1,1),
+        [AccountId]  SMALLINT      NOT NULL,
+        [Token]      NVARCHAR(500) NOT NULL,
+        [ExpiresAt]  DATETIME      NOT NULL,
+        [CreatedAt]  DATETIME      NOT NULL DEFAULT GETUTCDATE(),
+        [RevokedAt]  DATETIME      NULL,
+        CONSTRAINT [PK_RefreshToken] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_RefreshToken_Account]
+            FOREIGN KEY ([AccountId]) REFERENCES [SystemAccount]([AccountID])
+            ON DELETE NO ACTION
+    );
+    CREATE INDEX [IX_RefreshToken_AccountId] ON [RefreshToken] ([AccountId]);
+    CREATE UNIQUE INDEX [IX_RefreshToken_Token] ON [RefreshToken] ([Token]);
+    PRINT 'Created RefreshToken table.';
+END
+GO
+
+-- 4. Create AuditLog table (used in Phase 3)
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'AuditLog')
+BEGIN
+    CREATE TABLE [AuditLog] (
+        [Id]         INT            NOT NULL IDENTITY(1,1),
+        [UserId]     SMALLINT       NULL,
+        [UserEmail]  NVARCHAR(100)  NULL,
+        [Action]     NVARCHAR(20)   NOT NULL,
+        [Entity]     NVARCHAR(50)   NOT NULL,
+        [EntityId]   NVARCHAR(50)   NULL,
+        [BeforeJson] NVARCHAR(MAX)  NULL,
+        [AfterJson]  NVARCHAR(MAX)  NULL,
+        [Timestamp]  DATETIME       NOT NULL DEFAULT GETUTCDATE(),
+        CONSTRAINT [PK_AuditLog] PRIMARY KEY ([Id])
+    );
+    CREATE INDEX [IX_AuditLog_UserId]    ON [AuditLog] ([UserId]);
+    CREATE INDEX [IX_AuditLog_Entity]    ON [AuditLog] ([Entity]);
+    CREATE INDEX [IX_AuditLog_Timestamp] ON [AuditLog] ([Timestamp]);
+    PRINT 'Created AuditLog table.';
+END
+GO
+
+-- 5. Create TagLearningCache table (used in Phase 6 – AI API)
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'TagLearningCache')
+BEGIN
+    CREATE TABLE [TagLearningCache] (
+        [Id]            INT           NOT NULL IDENTITY(1,1),
+        [Keyword]       NVARCHAR(100) NOT NULL,
+        [TagName]       NVARCHAR(50)  NOT NULL,
+        [SelectedCount] INT           NOT NULL DEFAULT 1,
+        [LastUpdated]   DATETIME      NOT NULL DEFAULT GETUTCDATE(),
+        CONSTRAINT [PK_TagLearningCache] PRIMARY KEY ([Id])
+    );
+    CREATE INDEX [IX_TagLearningCache_Keyword] ON [TagLearningCache] ([Keyword]);
+    PRINT 'Created TagLearningCache table.';
+END
+GO
+
+PRINT '===== ASS02 Update Script completed successfully =====';

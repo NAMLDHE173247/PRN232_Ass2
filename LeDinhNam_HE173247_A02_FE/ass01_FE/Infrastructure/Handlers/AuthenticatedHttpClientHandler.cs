@@ -37,7 +37,11 @@ public class AuthenticatedHttpClientHandler : DelegatingHandler
         var context = _httpContextAccessor.HttpContext;
         if (context == null)
         {
-            // Background worker or no session -> proceed without token
+            var workerToken = _serviceProvider.GetService<ass01_FE.Infrastructure.Services.WorkerTokenService>()?.AccessToken;
+            if (!string.IsNullOrEmpty(workerToken))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", workerToken);
+            }
             return await base.SendAsync(request, cancellationToken);
         }
 

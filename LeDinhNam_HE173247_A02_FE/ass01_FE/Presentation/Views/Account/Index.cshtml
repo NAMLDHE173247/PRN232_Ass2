@@ -21,6 +21,7 @@
                     <option value="">All Roles</option>
                     @if (ViewBag.Role == 1) { <option value="1" selected>Staff</option> } else { <option value="1">Staff</option> }
                     @if (ViewBag.Role == 2) { <option value="2" selected>Lecturer</option> } else { <option value="2">Lecturer</option> }
+                    @if (ViewBag.Role == 3) { <option value="3" selected>Admin</option> } else { <option value="3">Admin</option> }
                 </select>
             </div>
             <div class="col-auto">
@@ -146,6 +147,20 @@
                         </select>
                         <div class="invalid-feedback">Role is required.</div>
                     </div>
+                    <div id="passwordSection" class="d-none">
+                        <hr/>
+                        <h6>Change Password (Optional)</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="e_curr_pass" />
+                            <div class="invalid-feedback">Current password is required to change password.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Password (min 6 chars)</label>
+                            <input type="password" class="form-control" id="e_new_pass" minlength="6" />
+                            <div class="invalid-feedback">New password must be at least 6 chars.</div>
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -158,6 +173,8 @@
 
 @section Scripts {
     <script>
+        const currentUserId = @Html.Raw(Context.Session.GetString("AccountId") ?? "0");
+
         function showAlert(msg, type = 'success') {
             showAppToast("Notification", msg, type);
         }
@@ -258,12 +275,35 @@
             document.getElementById('e_email').value = email;
             document.getElementById('e_role').value = role;
             
+            const pwdSection = document.getElementById('passwordSection');
+            if (id == currentUserId) {
+                pwdSection.classList.remove('d-none');
+            } else {
+                pwdSection.classList.add('d-none');
+            }
+            document.getElementById('e_curr_pass').value = '';
+            document.getElementById('e_new_pass').value = '';
+            
             document.getElementById('editForm').classList.remove('was-validated');
             new bootstrap.Modal(document.getElementById('editModal')).show();
         }
 
         async function updateAccount() {
             const form = document.getElementById('editForm');
+            const id = parseInt(document.getElementById('e_id').value);
+            const isSelf = (id == currentUserId);
+            
+            const currPass = document.getElementById('e_curr_pass').value;
+            const newPass = document.getElementById('e_new_pass').value;
+            
+            if (isSelf && (currPass || newPass)) {
+                document.getElementById('e_curr_pass').required = true;
+                document.getElementById('e_new_pass').required = true;
+            } else {
+                document.getElementById('e_curr_pass').required = false;
+                document.getElementById('e_new_pass').required = false;
+            }
+
             if (!form.checkValidity()) {
                 form.classList.add('was-validated');
                 return;
@@ -276,7 +316,7 @@
                 btn.disabled = true;
 
                 const data = {
-                    accountId: parseInt(document.getElementById('e_id').value),
+                    accountId: id,
                     accountName: document.getElementById('e_name').value,
                     accountEmail: document.getElementById('e_email').value,
                     accountRole: parseInt(document.getElementById('e_role').value)
@@ -291,7 +331,25 @@
                     });
                     const res = await response.json();
                     if (response.ok) {
-                        showAlert(res.message, 'success');
+                        
+                        // Change password if provided and valid
+                        if (isSelf && currPass && newPass) {
+                            const pwdData = { currentPassword: currPass, newPassword: newPass };
+                            const pwdRes = await fetch(`/Account/ChangePassword?id=${id}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(pwdData)
+                            });
+                            if (!pwdRes.ok) {
+                                const pwdErr = await pwdRes.json();
+                                showAlert('Account updated, but password change failed: ' + (pwdErr.message || ''), 'warning');
+                                bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                                await loadTable();
+                                return;
+                            }
+                        }
+
+                        showAlert('Account updated successfully.', 'success');
                         bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
                         await loadTable();
                     } else {

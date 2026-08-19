@@ -37,4 +37,13 @@ public static class OfflineHelper
 
         return true;
     }
+
+    public static void ThrowIfOffline(HttpResponseMessage response)
+    {
+        var code = (int)response.StatusCode;
+        if (code >= 500)
+        {
+            response.EnsureSuccessStatusCode();
+        }
+    }
 }

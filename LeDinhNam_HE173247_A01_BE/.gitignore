@@ -1,0 +1,19 @@
+## .NET build artifacts
+bin/
+obj/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+
+## Rider / ReSharper
+.idea/
+*.sln.iml
+
+## OS files
+.DS_Store
+Thumbs.db
+
+## Local environment files
+*.local.json

@@ -22,7 +22,13 @@ namespace ass01_FE.DataAccess.Services
 
         public async Task<List<TagDto>?> GetTagsAsync()
         {
-            return await _httpClient.GetFromJsonAsync<List<TagDto>>("/api/tag");
+            var response = await _httpClient.GetAsync("/api/tag");
+            ass01_FE.Infrastructure.Helpers.OfflineHelper.ThrowIfOffline(response);
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<List<TagDto>>();
+            }
+            return null;
         }
 
         public async Task<TagDto?> GetTagByIdAsync(int id)
