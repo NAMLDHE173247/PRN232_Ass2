@@ -1,4 +1,4 @@
-@model List<ass01_FE.Presentation.Models.Account.AccountDto>
+﻿@model List<ass01_FE.Presentation.Models.Account.AccountDto>
 @{
     ViewData["Title"] = "Account Management";
 }

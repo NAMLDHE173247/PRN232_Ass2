@@ -12,7 +12,7 @@ using System;
 using System.Reflection;
 
 [assembly: System.Reflection.AssemblyCompanyAttribute("FUNewsManagement_AnalyticsAPI")]
-[assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
+[assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
 [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ce6243bb20b4fd36f8473e5cd15350ddda6956f7")]
 [assembly: System.Reflection.AssemblyProductAttribute("FUNewsManagement_AnalyticsAPI")]

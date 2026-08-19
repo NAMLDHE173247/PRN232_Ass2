@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ass01.BusinessLogic.DTOs.Account;
@@ -100,7 +100,7 @@ public class AccountController : ControllerBase
     }
 
     [HttpPost("{id}/change-password")]
-    [Authorize(Roles = "Admin,Staff,Lecturer")]
+    [Authorize(Roles = "Staff,Lecturer")]
     public async Task<IActionResult> ChangePassword(short id, [FromBody] ChangePasswordRequest request)
     {
         var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;

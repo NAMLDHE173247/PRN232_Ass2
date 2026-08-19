@@ -1,4 +1,4 @@
-using ClosedXML.Excel;
+﻿using ClosedXML.Excel;
 using FUNewsManagement_AnalyticsAPI.Data;
 using FUNewsManagement_AnalyticsAPI.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -109,7 +109,7 @@ namespace FUNewsManagement_AnalyticsAPI.Controllers
         {
             var newsQuery = _context.NewsArticles
                 .Include(n => n.Category)
-                .Include(n => n.CreatedBy)
+                .Where(n => n.NewsStatus == true)
                 .AsQueryable();
 
             newsQuery = ApplyFilter(newsQuery, filter);
@@ -124,9 +124,7 @@ namespace FUNewsManagement_AnalyticsAPI.Controllers
                     n.NewsTitle,
                     Headline = n.Headline,
                     n.ViewCount,
-                    CategoryName = n.Category != null ? n.Category.CategoryName : null,
-                    AuthorName = n.CreatedBy != null ? n.CreatedBy.AccountName : null,
-                    n.CreatedDate
+                    CategoryName = n.Category != null ? n.Category.CategoryName : null
                 })
                 .ToListAsync();
 
