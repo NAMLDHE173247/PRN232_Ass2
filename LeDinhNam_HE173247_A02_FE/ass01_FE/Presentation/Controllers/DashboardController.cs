@@ -63,7 +63,7 @@ public class DashboardController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportAnalyticsReportAsync(DashboardFilterViewModel filter)
+    public async Task<IActionResult> ExportAnalyticsReport(DashboardFilterViewModel filter)
     {
         try
         {

@@ -55,8 +55,8 @@ public class AuthController : Controller
         if (!string.IsNullOrEmpty(result.Role))
             HttpContext.Session.SetString("UserRole", result.Role);
             
-        if (!string.IsNullOrEmpty(result.AccountId))
-            HttpContext.Session.SetString("AccountId", result.AccountId);
+        if (result.AccountId.HasValue)
+            HttpContext.Session.SetString("AccountId", result.AccountId.Value.ToString());
 
         if (!string.IsNullOrEmpty(result.Email))
             HttpContext.Session.SetString("Email", result.Email);

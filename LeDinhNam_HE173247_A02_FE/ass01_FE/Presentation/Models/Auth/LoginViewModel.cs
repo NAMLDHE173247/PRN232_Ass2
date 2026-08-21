@@ -19,6 +19,6 @@ public class LoginResponse
     public string? RefreshToken { get; set; }
     public DateTimeOffset? ExpiresAt { get; set; }
     public string? Role { get; set; }
-    public string? AccountId { get; set; }
+    public short? AccountId { get; set; }
     public string? Email { get; set; }
 }
